@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,120 +22,89 @@ const ComplaintsSection = () => {
   const [replyText, setReplyText] = useState('');
   const [isReplying, setIsReplying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Sample feedback data
-  const [feedbackItems, setFeedbackItems] = useState([
-    {
-      id: '1',
-      type: 'complaint',
-      text: 'The dashboard is loading very slowly on my computer. It takes almost 30 seconds to load the analytics page.',
-      user: {
-        id: '101',
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        avatar: ''
-      },
-      date: '2023-04-15',
-      status: 'pending',
-      replies: []
-    },
-    {
-      id: '2',
-      type: 'suggestion',
-      text: 'It would be great if you could add a dark mode option to the dashboard. It would be easier on the eyes when working late.',
-      user: {
-        id: '102',
-        name: 'Jane Smith',
-        email: 'jane.smith@example.com',
-        avatar: ''
-      },
-      date: '2023-04-12',
-      status: 'pending',
-      replies: []
-    },
-    {
-      id: '3',
-      type: 'complaint',
-      text: 'I\'m having trouble exporting my reports to PDF. The button doesn\'t seem to work on Firefox.',
-      user: {
-        id: '103',
-        name: 'Robert Johnson',
-        email: 'robert.johnson@example.com',
-        avatar: ''
-      },
-      date: '2023-04-10',
-      status: 'resolved',
-      replies: [
-        {
-          id: 'r1',
-          text: 'Thank you for reporting this issue. We\'ve fixed the PDF export functionality for Firefox in our latest update. Please refresh your browser and try again.',
-          date: '2023-04-11',
-          admin: true
-        }
-      ]
-    },
-    {
-      id: '4',
-      type: 'praise',
-      text: 'I love the new analytics dashboard! It\'s so much easier to use than the previous version. Great job!',
-      user: {
-        id: '104',
-        name: 'Emily Davis',
-        email: 'emily.davis@example.com',
-        avatar: ''
-      },
-      date: '2023-04-08',
-      status: 'acknowledged',
-      replies: [
-        {
-          id: 'r2',
-          text: 'Thank you for your kind words! We\'re glad you\'re enjoying the new analytics dashboard.',
-          date: '2023-04-09',
-          admin: true
-        }
-      ]
-    },
-    {
-      id: '5',
-      type: 'suggestion',
-      text: 'It would be helpful to have a way to schedule reports to be sent automatically to my email on a weekly basis.',
-      user: {
-        id: '105',
-        name: 'Michael Wilson',
-        email: 'michael.wilson@example.com',
-        avatar: ''
-      },
-      date: '2023-04-05',
-      status: 'in_progress',
-      replies: [
-        {
-          id: 'r3',
-          text: 'Great suggestion! We\'re actually working on implementing scheduled reports in our next update. We\'ll let you know when it\'s available.',
-          date: '2023-04-06',
-          admin: true
-        }
-      ]
+
+  const [feedbackItems, setFeedbackItems] = useState([]);
+
+  useEffect(() => {
+    fetchFeedback();
+  }, []);
+
+  const fetchFeedback = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch all feedback from the database
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from('feedback')
+        .select('*, user:profiles(id, full_name, email, avatar_url)')
+        .order('created_at', { ascending: false });
+
+      if (feedbackError) throw feedbackError;
+
+      // Fetch replies for each feedback
+      const feedbackWithReplies = await Promise.all(
+        feedbackData.map(async (feedback) => {
+          const { data: repliesData, error: repliesError } = await supabase
+            .from('feedback_replies')
+            .select('*, profile:profiles(full_name, avatar_url)')
+            .eq('feedback_id', feedback.id)
+            .order('created_at', { ascending: true });
+
+          if (repliesError) throw repliesError;
+
+          // Transform the data to match the expected format
+          return {
+            id: feedback.id,
+            type: feedback.feedback_type,
+            text: feedback.feedback_text,
+            user: {
+              id: feedback.user.id,
+              name: feedback.user.full_name || 'Unknown User',
+              email: feedback.user.email || '',
+              avatar: feedback.user.avatar_url || ''
+            },
+            date: new Date(feedback.created_at).toISOString().split('T')[0],
+            status: feedback.status || 'pending',
+            replies: repliesData.map(reply => ({
+              id: reply.id,
+              text: reply.reply_text,
+              date: new Date(reply.created_at).toISOString().split('T')[0],
+              admin: reply.is_admin
+            }))
+          };
+        })
+      );
+
+      setFeedbackItems(feedbackWithReplies);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      toast({
+        title: 'Error fetching feedback',
+        description: 'Could not load feedback data. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
-  ]);
-  
+  };
+
   // Filter feedback based on search query, type filter, and date filter
   const filteredFeedback = feedbackItems.filter(item => {
-    const matchesSearch = 
+    const matchesSearch =
       item.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesType = typeFilter === 'all' || item.type === typeFilter;
-    
+
     if (!matchesSearch || !matchesType) return false;
-    
+
     if (dateFilter === 'all') return true;
-    
+
     const itemDate = new Date(item.date);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - itemDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     switch (dateFilter) {
       case 'today':
         return diffDays <= 1;
@@ -147,15 +116,15 @@ const ComplaintsSection = () => {
         return true;
     }
   });
-  
+
   const handleReply = (feedback) => {
     setSelectedFeedback(feedback);
     setReplyText('');
     setIsReplying(true);
   };
-  
+
   const handleSubmitReply = async () => {
-    if (!replyText.trim()) {
+    if (!replyText.trim() || !selectedFeedback) {
       toast({
         title: 'Missing information',
         description: 'Please enter a reply.',
@@ -163,38 +132,39 @@ const ComplaintsSection = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      // In a real app, you would add the reply to your database
-      // For now, we'll just simulate adding a reply
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newReply = {
-        id: `r${Math.floor(Math.random() * 1000)}`,
-        text: replyText,
-        date: new Date().toISOString().split('T')[0],
-        admin: true
-      };
-      
-      const updatedFeedback = feedbackItems.map(item => {
-        if (item.id === selectedFeedback.id) {
-          return {
-            ...item,
-            status: 'acknowledged',
-            replies: [...item.replies, newReply]
-          };
-        }
-        return item;
-      });
-      
-      setFeedbackItems(updatedFeedback);
-      
+      // Add the reply to the database
+      const { data: replyData, error: replyError } = await supabase
+        .from('feedback_replies')
+        .insert({
+          feedback_id: selectedFeedback.id,
+          user_id: selectedFeedback.user.id, // This should be the admin's ID in a real app
+          is_admin: true,
+          reply_text: replyText,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select();
+
+      if (replyError) throw replyError;
+
+      // Update the feedback status
+      const { error: updateError } = await supabase
+        .from('feedback')
+        .update({ status: 'acknowledged' })
+        .eq('id', selectedFeedback.id);
+
+      if (updateError) throw updateError;
+
+      // Refresh the feedback data
+      await fetchFeedback();
+
       setIsReplying(false);
-      
+      setReplyText('');
+
       toast({
         title: 'Reply sent',
         description: 'Your reply has been sent successfully.',
@@ -209,27 +179,20 @@ const ComplaintsSection = () => {
       setIsLoading(false);
     }
   };
-  
+
   const handleUpdateStatus = async (feedbackId, newStatus) => {
     try {
-      // In a real app, you would update the status in your database
-      // For now, we'll just simulate updating the status
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const updatedFeedback = feedbackItems.map(item => {
-        if (item.id === feedbackId) {
-          return {
-            ...item,
-            status: newStatus
-          };
-        }
-        return item;
-      });
-      
-      setFeedbackItems(updatedFeedback);
-      
+      // Update the status in the database
+      const { error } = await supabase
+        .from('feedback')
+        .update({ status: newStatus })
+        .eq('id', feedbackId);
+
+      if (error) throw error;
+
+      // Refresh the feedback data
+      await fetchFeedback();
+
       toast({
         title: 'Status updated',
         description: `Feedback status has been updated to ${newStatus}.`,
@@ -242,7 +205,7 @@ const ComplaintsSection = () => {
       });
     }
   };
-  
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'pending':
@@ -257,7 +220,7 @@ const ComplaintsSection = () => {
         return <Badge>{status}</Badge>;
     }
   };
-  
+
   const getTypeIcon = (type) => {
     switch (type) {
       case 'complaint':
@@ -270,7 +233,7 @@ const ComplaintsSection = () => {
         return <MessageSquare className="h-4 w-4" />;
     }
   };
-  
+
   const getInitials = (name) => {
     return name
       .split(' ')
@@ -278,7 +241,7 @@ const ComplaintsSection = () => {
       .join('')
       .toUpperCase();
   };
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -349,7 +312,13 @@ const ComplaintsSection = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredFeedback.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-marketing-blue" />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredFeedback.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No feedback found
@@ -430,7 +399,7 @@ const ComplaintsSection = () => {
           </div>
         </CardFooter>
       </Card>
-      
+
       {/* Reply Dialog */}
       <Dialog open={isReplying} onOpenChange={setIsReplying}>
         <DialogContent>
@@ -455,7 +424,7 @@ const ComplaintsSection = () => {
                 </div>
                 <p className="text-sm">{selectedFeedback.text}</p>
               </div>
-              
+
               {selectedFeedback.replies.length > 0 && (
                 <div className="space-y-3">
                   <Label>Previous Replies</Label>
@@ -475,7 +444,7 @@ const ComplaintsSection = () => {
                   ))}
                 </div>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="reply">Your Reply</Label>
                 <Textarea

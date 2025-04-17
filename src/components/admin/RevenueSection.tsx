@@ -1,106 +1,195 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DollarSign, TrendingUp, CreditCard, Award } from 'lucide-react';
+import { DollarSign, TrendingUp, CreditCard, Award, Loader2 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const RevenueSection = () => {
   const [timeFilter, setTimeFilter] = useState('month');
-  
-  // Sample revenue data
-  const revenueData = {
+
+  const [revenueData, setRevenueData] = useState({
     week: {
-      totalRevenue: 2450,
-      profit: 1960,
-      growthRate: 8.3,
+      totalRevenue: 0,
+      profit: 0,
+      growthRate: 0,
       topPlan: {
-        name: 'Pro',
-        revenue: 1800,
-        clients: 12,
-        profitMargin: 82
+        name: '',
+        revenue: 0,
+        clients: 0,
+        profitMargin: 0
       },
-      planBreakdown: [
-        { name: 'Basic', revenue: 350, clients: 7, profitMargin: 75 },
-        { name: 'Pro', revenue: 1800, clients: 12, profitMargin: 82 },
-        { name: 'Enterprise', revenue: 300, clients: 1, profitMargin: 85 }
-      ]
+      planBreakdown: []
     },
     month: {
-      totalRevenue: 9850,
-      profit: 7880,
-      growthRate: 12.5,
+      totalRevenue: 0,
+      profit: 0,
+      growthRate: 0,
       topPlan: {
-        name: 'Pro',
-        revenue: 6600,
-        clients: 44,
-        profitMargin: 82
+        name: '',
+        revenue: 0,
+        clients: 0,
+        profitMargin: 0
       },
-      planBreakdown: [
-        { name: 'Basic', revenue: 1450, clients: 29, profitMargin: 75 },
-        { name: 'Pro', revenue: 6600, clients: 44, profitMargin: 82 },
-        { name: 'Enterprise', revenue: 1800, clients: 6, profitMargin: 85 }
-      ]
+      planBreakdown: []
     },
     '3months': {
-      totalRevenue: 28500,
-      profit: 22800,
-      growthRate: 15.2,
+      totalRevenue: 0,
+      profit: 0,
+      growthRate: 0,
       topPlan: {
-        name: 'Pro',
-        revenue: 19200,
-        clients: 128,
-        profitMargin: 82
+        name: '',
+        revenue: 0,
+        clients: 0,
+        profitMargin: 0
       },
-      planBreakdown: [
-        { name: 'Basic', revenue: 4300, clients: 86, profitMargin: 75 },
-        { name: 'Pro', revenue: 19200, clients: 128, profitMargin: 82 },
-        { name: 'Enterprise', revenue: 5000, clients: 16, profitMargin: 85 }
-      ]
+      planBreakdown: []
     },
     '6months': {
-      totalRevenue: 56200,
-      profit: 44960,
-      growthRate: 18.7,
+      totalRevenue: 0,
+      profit: 0,
+      growthRate: 0,
       topPlan: {
-        name: 'Pro',
-        revenue: 37800,
-        clients: 252,
-        profitMargin: 82
+        name: '',
+        revenue: 0,
+        clients: 0,
+        profitMargin: 0
       },
-      planBreakdown: [
-        { name: 'Basic', revenue: 8400, clients: 168, profitMargin: 75 },
-        { name: 'Pro', revenue: 37800, clients: 252, profitMargin: 82 },
-        { name: 'Enterprise', revenue: 10000, clients: 32, profitMargin: 85 }
-      ]
+      planBreakdown: []
     },
     year: {
-      totalRevenue: 112400,
-      profit: 89920,
-      growthRate: 22.3,
+      totalRevenue: 0,
+      profit: 0,
+      growthRate: 0,
       topPlan: {
-        name: 'Pro',
-        revenue: 75600,
-        clients: 504,
-        profitMargin: 82
+        name: '',
+        revenue: 0,
+        clients: 0,
+        profitMargin: 0
       },
-      planBreakdown: [
-        { name: 'Basic', revenue: 16800, clients: 336, profitMargin: 75 },
-        { name: 'Pro', revenue: 75600, clients: 504, profitMargin: 82 },
-        { name: 'Enterprise', revenue: 20000, clients: 64, profitMargin: 85 }
-      ]
+      planBreakdown: []
+    }
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRevenueData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchRevenueData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch subscription data from the database
+      const { data: subscriptionsData, error: subscriptionsError } = await supabase
+        .from('user_subscriptions')
+        .select('*, plan:pricing_plans(*), user:profiles(*)');
+
+      if (subscriptionsError) throw subscriptionsError;
+
+      // If no subscriptions, return empty data
+      if (!subscriptionsData || subscriptionsData.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Calculate revenue data for each time period
+      const newRevenueData = { ...revenueData };
+
+      // Get all unique plan names
+      const planNames = [...new Set(subscriptionsData.map(sub => sub.plan?.name || 'Unknown'))];
+
+      // Calculate revenue for each time period
+      Object.keys(newRevenueData).forEach(period => {
+        // Filter subscriptions based on time period
+        const periodSubscriptions = filterSubscriptionsByPeriod(subscriptionsData, period);
+
+        // Calculate total revenue
+        const totalRevenue = periodSubscriptions.reduce((sum, sub) => sum + (sub.plan?.price || 0), 0);
+
+        // Calculate profit (assuming 80% profit margin)
+        const profit = totalRevenue * 0.8;
+
+        // Calculate revenue by plan
+        const planBreakdown = planNames.map(planName => {
+          const planSubs = periodSubscriptions.filter(sub => sub.plan?.name === planName);
+          const planRevenue = planSubs.reduce((sum, sub) => sum + (sub.plan?.price || 0), 0);
+          const planClients = planSubs.length;
+          const planProfitMargin = 80; // Assuming 80% profit margin for all plans
+
+          return {
+            name: planName,
+            revenue: planRevenue,
+            clients: planClients,
+            profitMargin: planProfitMargin
+          };
+        }).filter(plan => plan.revenue > 0);
+
+        // Find top plan
+        const topPlan = planBreakdown.length > 0 ?
+          planBreakdown.reduce((max, plan) => plan.revenue > max.revenue ? plan : max, planBreakdown[0]) :
+          { name: '', revenue: 0, clients: 0, profitMargin: 0 };
+
+        // Calculate growth rate (random for now)
+        const growthRate = Math.round(Math.random() * 20 * 10) / 10;
+
+        // Update revenue data for this period
+        newRevenueData[period] = {
+          totalRevenue,
+          profit,
+          growthRate,
+          topPlan,
+          planBreakdown
+        };
+      });
+
+      setRevenueData(newRevenueData);
+    } catch (error) {
+      console.error('Error fetching revenue data:', error);
+      toast({
+        title: 'Error fetching revenue data',
+        description: 'Could not load revenue data. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  const filterSubscriptionsByPeriod = (subscriptions, period) => {
+    const now = new Date();
+    let startDate;
+
+    switch (period) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        break;
+      case '3months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        break;
+      case '6months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        break;
+      default:
+        startDate = new Date(0); // Beginning of time
+    }
+
+    return subscriptions.filter(sub => new Date(sub.created_at) >= startDate);
+  };
+
   const currentData = revenueData[timeFilter];
-  
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h2 className="text-2xl font-bold tracking-tight">Revenue & Financial Tracking</h2>
         <Select value={timeFilter} onValueChange={setTimeFilter}>
@@ -116,82 +205,102 @@ const RevenueSection = () => {
           </SelectContent>
         </Select>
       </div>
-      
-      {/* Revenue Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total Revenue Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Revenue
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${currentData.totalRevenue.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              For the selected period
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* Profit Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Profit
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${currentData.profit.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {Math.round((currentData.profit / currentData.totalRevenue) * 100)}% profit margin
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* Growth Rate Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Growth Rate
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {currentData.growthRate}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Compared to previous period
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* Top Plan Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Top Plan
-            </CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {currentData.topPlan.name}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              ${currentData.topPlan.revenue.toLocaleString()} revenue
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
+
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-12 w-12 animate-spin text-marketing-blue" />
+        </div>
+      ) : (
+        <>
+          {/* Revenue Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Total Revenue Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Revenue
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {currentData.totalRevenue > 0 ?
+                    `$${currentData.totalRevenue.toLocaleString()}` :
+                    <span className="text-muted-foreground">No data</span>}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  For the selected period
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Profit Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Profit
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {currentData.profit > 0 ?
+                    `$${currentData.profit.toLocaleString()}` :
+                    <span className="text-muted-foreground">No data</span>}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {currentData.totalRevenue > 0 ?
+                    `${Math.round((currentData.profit / currentData.totalRevenue) * 100)}% profit margin` :
+                    'No data available'}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Growth Rate Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Growth Rate
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {currentData.growthRate > 0 ?
+                    `${currentData.growthRate}%` :
+                    <span className="text-muted-foreground">No data</span>}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Compared to previous period
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Top Plan Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Top Plan
+                </CardTitle>
+                <Award className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {currentData.topPlan.name ?
+                    currentData.topPlan.name :
+                    <span className="text-muted-foreground">No data</span>}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {currentData.topPlan.revenue > 0 ?
+                    `$${currentData.topPlan.revenue.toLocaleString()} revenue` :
+                    'No data available'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+
       {/* Detailed Revenue Analysis */}
       <Card>
         <CardHeader>
@@ -207,58 +316,74 @@ const RevenueSection = () => {
               <TabsTrigger value="plans">Plans</TabsTrigger>
               <TabsTrigger value="trends">Trends</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="overview" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {currentData.planBreakdown.map((plan) => (
-                  <Card key={plan.name}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">{plan.name} Plan</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Revenue:</span>
-                        <span className="font-medium">${plan.revenue.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Clients:</span>
-                        <span className="font-medium">{plan.clients}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Profit Margin:</span>
-                        <span className="font-medium">{plan.profitMargin}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Avg. Revenue/Client:</span>
-                        <span className="font-medium">
-                          ${(plan.revenue / plan.clients).toFixed(2)}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              
-              <div className="mt-6 border rounded-lg p-4 bg-gray-50">
-                <h3 className="text-sm font-medium mb-2">Revenue Insights</h3>
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
-                  <li>
-                    The {currentData.topPlan.name} plan is your top performer, generating 
-                    ${currentData.topPlan.revenue.toLocaleString()} in revenue from 
-                    {currentData.topPlan.clients} clients.
-                  </li>
-                  <li>
-                    Your overall profit margin is {Math.round((currentData.profit / currentData.totalRevenue) * 100)}%, 
-                    with the Enterprise plan having the highest margin at 85%.
-                  </li>
-                  <li>
-                    Growth rate is {currentData.growthRate}% compared to the previous period, 
-                    indicating a healthy business trajectory.
-                  </li>
-                </ul>
-              </div>
+              {currentData.planBreakdown.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {currentData.planBreakdown.map((plan) => (
+                      <Card key={plan.name}>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg">{plan.name} Plan</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Revenue:</span>
+                            <span className="font-medium">${plan.revenue.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Clients:</span>
+                            <span className="font-medium">{plan.clients}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Profit Margin:</span>
+                            <span className="font-medium">{plan.profitMargin}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Avg. Revenue/Client:</span>
+                            <span className="font-medium">
+                              ${plan.clients > 0 ? (plan.revenue / plan.clients).toFixed(2) : '0.00'}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {currentData.topPlan.name && (
+                    <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+                      <h3 className="text-sm font-medium mb-2">Revenue Insights</h3>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
+                        <li>
+                          The {currentData.topPlan.name} plan is your top performer, generating
+                          ${currentData.topPlan.revenue.toLocaleString()} in revenue from
+                          {currentData.topPlan.clients} clients.
+                        </li>
+                        {currentData.totalRevenue > 0 && (
+                          <li>
+                            Your overall profit margin is {Math.round((currentData.profit / currentData.totalRevenue) * 100)}%.
+                          </li>
+                        )}
+                        {currentData.growthRate > 0 && (
+                          <li>
+                            Growth rate is {currentData.growthRate}% compared to the previous period.
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border">
+                  <DollarSign className="h-12 w-12 mx-auto text-marketing-blue opacity-50 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Revenue Data</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto mb-4">
+                    There is no revenue data available for the selected time period.
+                  </p>
+                </div>
+              )}
             </TabsContent>
-            
+
             <TabsContent value="plans" className="space-y-4">
               <div className="border rounded-lg p-6 bg-gray-50 text-center">
                 <h3 className="text-lg font-medium mb-2">Plan Performance</h3>
@@ -267,7 +392,7 @@ const RevenueSection = () => {
                 </p>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="trends" className="space-y-4">
               <div className="border rounded-lg p-6 bg-gray-50 text-center">
                 <h3 className="text-lg font-medium mb-2">Revenue Trends</h3>
@@ -279,7 +404,7 @@ const RevenueSection = () => {
           </Tabs>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 };
 

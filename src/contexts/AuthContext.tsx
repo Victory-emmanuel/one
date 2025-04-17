@@ -86,8 +86,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      // Try the standard signOut method first
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch (signOutError) {
+        console.error('Standard signOut failed:', signOutError);
+        // If standard signOut fails, manually clear auth data
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('supabase.auth.refreshToken');
+        // Clear any other Supabase-related items
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('supabase.')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+
+      // Reset state
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setIsAdmin(false);
+
+      // Navigate to home page
       navigate('/');
+
+      // Reload the page to ensure all state is reset
+      window.location.reload();
     } catch (error) {
       console.error('Error signing out:', error);
     }

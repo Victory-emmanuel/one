@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,56 +20,93 @@ const ClientsSection = () => {
   const [timeFilter, setTimeFilter] = useState('all');
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Sample client data
-  const [clients, setClients] = useState([
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      plan: 'Pro',
-      status: 'active',
-      signupDate: '2023-04-15',
-      avatar: ''
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      plan: 'Basic',
-      status: 'trial',
-      signupDate: '2023-04-10',
-      avatar: ''
-    },
-    {
-      id: '3',
-      name: 'Robert Johnson',
-      email: 'robert.johnson@example.com',
-      plan: 'Enterprise',
-      status: 'active',
-      signupDate: '2023-03-22',
-      avatar: ''
-    },
-    {
-      id: '4',
-      name: 'Emily Davis',
-      email: 'emily.davis@example.com',
-      plan: 'Pro',
-      status: 'inactive',
-      signupDate: '2023-02-18',
-      avatar: ''
-    },
-    {
-      id: '5',
-      name: 'Michael Wilson',
-      email: 'michael.wilson@example.com',
-      plan: 'Basic',
-      status: 'trial',
-      signupDate: '2023-04-14',
-      avatar: ''
+
+  const [clients, setClients] = useState([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(true);
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const fetchClients = async () => {
+    setIsLoadingClients(true);
+    try {
+      // Fetch all users from the auth.users table
+      const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+
+      if (userError) {
+        // If admin API fails, try to get users from profiles table instead
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*');
+
+        if (profilesError) throw profilesError;
+
+        // Transform profiles data to match the expected format
+        const clientsData = profilesData.map(profile => {
+          return {
+            id: profile.id,
+            name: profile.full_name || 'Unknown',
+            email: profile.email || '',
+            plan: 'Basic', // Default plan
+            status: 'active', // Default status
+            signupDate: profile.created_at ? new Date(profile.created_at).toISOString().split('T')[0] : '',
+            avatar: profile.avatar_url || ''
+          };
+        });
+
+        setClients(clientsData);
+      } else {
+        // Get subscription data for each user
+        const { data: subscriptionsData, error: subscriptionsError } = await supabase
+          .from('user_subscriptions')
+          .select('*, plan:pricing_plans(*)');
+
+        if (subscriptionsError) throw subscriptionsError;
+
+        // Get profiles data for each user
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*');
+
+        if (profilesError) throw profilesError;
+
+        // Transform auth users data to match the expected format
+        const clientsData = userData.users.map(user => {
+          // Find subscription for this user
+          const subscription = subscriptionsData.find(sub => sub.user_id === user.id);
+
+          // Find profile for this user
+          const profile = profilesData.find(profile => profile.id === user.id);
+
+          return {
+            id: user.id,
+            name: profile?.full_name || user.user_metadata?.full_name || 'Unknown',
+            email: user.email,
+            plan: subscription?.plan?.name || 'Basic',
+            status: subscription?.status || 'inactive',
+            signupDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : '',
+            avatar: profile?.avatar_url || ''
+          };
+        });
+
+        setClients(clientsData);
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast({
+        title: 'Error fetching clients',
+        description: 'Could not load client data. Please try again later.',
+        variant: 'destructive',
+      });
+
+      // Set empty clients array
+      setClients([]);
+    } finally {
+      setIsLoadingClients(false);
     }
-  ]);
-  
+  };
+
   // New client form state
   const [newClient, setNewClient] = useState({
     name: '',
@@ -77,22 +114,22 @@ const ClientsSection = () => {
     plan: 'Basic',
     status: 'trial'
   });
-  
+
   // Filter clients based on search query and time filter
   const filteredClients = clients.filter(client => {
-    const matchesSearch = 
+    const matchesSearch =
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     if (!matchesSearch) return false;
-    
+
     if (timeFilter === 'all') return true;
-    
+
     const signupDate = new Date(client.signupDate);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - signupDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     switch (timeFilter) {
       case 'week':
         return diffDays <= 7;
@@ -108,7 +145,7 @@ const ClientsSection = () => {
         return true;
     }
   });
-  
+
   const handleAddClient = async () => {
     if (!newClient.name || !newClient.email) {
       toast({
@@ -118,28 +155,91 @@ const ClientsSection = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      // In a real app, you would add the client to your database
-      // For now, we'll just simulate adding a client
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newClientData = {
-        id: (clients.length + 1).toString(),
-        name: newClient.name,
+      // Create a new user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: newClient.email,
-        plan: newClient.plan,
-        status: newClient.status,
-        signupDate: new Date().toISOString().split('T')[0],
-        avatar: ''
-      };
-      
-      setClients([...clients, newClientData]);
-      
+        email_confirm: true,
+        user_metadata: {
+          full_name: newClient.name
+        },
+        password: Math.random().toString(36).slice(-8) // Generate a random password
+      });
+
+      if (authError) throw authError;
+
+      // Create a profile for the new user
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          full_name: newClient.name,
+          email: newClient.email,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (profileError) throw profileError;
+
+      // Create a subscription for the new user
+      const { data: planData, error: planError } = await supabase
+        .from('pricing_plans')
+        .select('id')
+        .eq('name', newClient.plan)
+        .single();
+
+      if (planError) {
+        // If plan doesn't exist, create it
+        const { data: newPlan, error: createPlanError } = await supabase
+          .from('pricing_plans')
+          .insert({
+            name: newClient.plan,
+            description: `${newClient.plan} plan`,
+            price: newClient.plan === 'Basic' ? 9.99 : newClient.plan === 'Pro' ? 29.99 : 99.99,
+            duration: 30,
+            features: ['Feature 1', 'Feature 2', 'Feature 3'],
+            is_popular: newClient.plan === 'Pro',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (createPlanError) throw createPlanError;
+
+        // Create subscription with the new plan
+        const { error: subscriptionError } = await supabase
+          .from('user_subscriptions')
+          .insert({
+            user_id: authData.user.id,
+            plan_id: newPlan.id,
+            status: newClient.status,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (subscriptionError) throw subscriptionError;
+      } else {
+        // Create subscription with the existing plan
+        const { error: subscriptionError } = await supabase
+          .from('user_subscriptions')
+          .insert({
+            user_id: authData.user.id,
+            plan_id: planData.id,
+            status: newClient.status,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (subscriptionError) throw subscriptionError;
+      }
+
+      // Refresh clients list
+      await fetchClients();
+
       // Reset form
       setNewClient({
         name: '',
@@ -147,12 +247,12 @@ const ClientsSection = () => {
         plan: 'Basic',
         status: 'trial'
       });
-      
+
       setIsAddingClient(false);
-      
+
       toast({
         title: 'Client added',
-        description: 'The client has been added successfully.',
+        description: 'The client has been added successfully. A temporary password has been generated.',
       });
     } catch (error: any) {
       toast({
@@ -164,7 +264,7 @@ const ClientsSection = () => {
       setIsLoading(false);
     }
   };
-  
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -177,7 +277,7 @@ const ClientsSection = () => {
         return <Badge>{status}</Badge>;
     }
   };
-  
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -185,7 +285,7 @@ const ClientsSection = () => {
       .join('')
       .toUpperCase();
   };
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -314,7 +414,7 @@ const ClientsSection = () => {
                 <TabsTrigger value="year" onClick={() => setTimeFilter('year')}>This Year</TabsTrigger>
               </TabsList>
             </div>
-            
+
             <TabsContent value="all" className="space-y-4">
               <div className="rounded-md border">
                 <Table>
@@ -328,7 +428,13 @@ const ClientsSection = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredClients.length === 0 ? (
+                    {isLoadingClients ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8">
+                          <Loader2 className="h-8 w-8 animate-spin mx-auto text-marketing-blue" />
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredClients.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                           No clients found
@@ -380,7 +486,7 @@ const ClientsSection = () => {
                 </Table>
               </div>
             </TabsContent>
-            
+
             {/* Other tabs will show the same content but with different filters */}
             <TabsContent value="week" className="space-y-4">
               {/* Same table as above */}

@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Menu, User, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,6 +23,23 @@ interface AdminHeaderProps {
 const AdminHeader = ({ sidebarOpen, setSidebarOpen }: AdminHeaderProps) => {
   const { user, profile, signOut } = useAuth();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // Manual logout function as a fallback
+  const handleManualLogout = () => {
+    // Clear all localStorage items related to Supabase
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('supabase.')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Navigate to home page
+    navigate('/');
+
+    // Reload the page to ensure all state is reset
+    window.location.reload();
+  };
 
   // Get user initials for avatar fallback
   const getInitials = () => {
@@ -45,6 +63,8 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }: AdminHeaderProps) => {
               type="button"
               className="md:hidden text-gray-500 hover:text-gray-700 focus:outline-none"
               onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle sidebar"
+              title="Toggle sidebar"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -120,6 +140,9 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }: AdminHeaderProps) => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
                   Log out
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleManualLogout}>
+                  Force Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

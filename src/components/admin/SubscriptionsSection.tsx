@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,41 +17,54 @@ const SubscriptionsSection = () => {
   const [isEditingPlan, setIsEditingPlan] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  
-  // Sample pricing plans data
-  const [plans, setPlans] = useState([
-    {
-      id: '1',
-      name: 'Basic',
-      description: 'For individuals just getting started',
-      price: 9.99,
-      duration: 30,
-      features: ['Basic Analytics', 'Email Support', 'Up to 5 Projects'],
-      isPopular: false,
-      lastUpdated: '2023-03-15'
-    },
-    {
-      id: '2',
-      name: 'Pro',
-      description: 'For professionals and small teams',
-      price: 29.99,
-      duration: 30,
-      features: ['Advanced Analytics', 'Priority Support', 'Unlimited Projects', 'Advanced Reporting'],
-      isPopular: true,
-      lastUpdated: '2023-04-01'
-    },
-    {
-      id: '3',
-      name: 'Enterprise',
-      description: 'For large organizations',
-      price: 99.99,
-      duration: 30,
-      features: ['All Pro Features', '24/7 Dedicated Support', 'Custom Integrations', 'Advanced Security'],
-      isPopular: false,
-      lastUpdated: '2023-04-10'
+
+  const [plans, setPlans] = useState([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const fetchPlans = async () => {
+    setIsLoadingPlans(true);
+    try {
+      // Fetch pricing plans from the database
+      const { data, error } = await supabase
+        .from('pricing_plans')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform data to match the expected format
+      const formattedPlans = data.map(plan => ({
+        id: plan.id,
+        name: plan.name,
+        description: plan.description,
+        price: plan.price,
+        duration: plan.duration,
+        features: typeof plan.features === 'string' ?
+          JSON.parse(plan.features) :
+          Array.isArray(plan.features) ?
+            plan.features :
+            [],
+        isPopular: plan.is_popular,
+        lastUpdated: new Date(plan.updated_at).toISOString().split('T')[0]
+      }));
+
+      setPlans(formattedPlans);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      toast({
+        title: 'Error fetching plans',
+        description: 'Could not load pricing plans. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingPlans(false);
     }
-  ]);
-  
+  };
+
   // New plan form state
   const [newPlan, setNewPlan] = useState({
     name: '',
@@ -61,7 +74,7 @@ const SubscriptionsSection = () => {
     features: '',
     isPopular: false
   });
-  
+
   // Edit plan form state
   const [editPlan, setEditPlan] = useState({
     id: '',
@@ -72,7 +85,7 @@ const SubscriptionsSection = () => {
     features: '',
     isPopular: false
   });
-  
+
   const handleAddPlan = async () => {
     if (!newPlan.name || !newPlan.description || !newPlan.price || !newPlan.duration || !newPlan.features) {
       toast({
@@ -82,31 +95,33 @@ const SubscriptionsSection = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      // In a real app, you would add the plan to your database
-      // For now, we'll just simulate adding a plan
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // Add the plan to the database
+
       const featuresArray = newPlan.features.split('\\n').map(feature => feature.trim()).filter(Boolean);
-      
-      const newPlanData = {
-        id: (plans.length + 1).toString(),
-        name: newPlan.name,
-        description: newPlan.description,
-        price: parseFloat(newPlan.price),
-        duration: parseInt(newPlan.duration),
-        features: featuresArray,
-        isPopular: newPlan.isPopular,
-        lastUpdated: new Date().toISOString().split('T')[0]
-      };
-      
-      setPlans([...plans, newPlanData]);
-      
+
+      const { data, error } = await supabase
+        .from('pricing_plans')
+        .insert({
+          name: newPlan.name,
+          description: newPlan.description,
+          price: parseFloat(newPlan.price),
+          duration: parseInt(newPlan.duration),
+          features: featuresArray,
+          is_popular: newPlan.isPopular,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select();
+
+      if (error) throw error;
+
+      // Refresh plans list
+      await fetchPlans();
+
       // Reset form
       setNewPlan({
         name: '',
@@ -116,9 +131,9 @@ const SubscriptionsSection = () => {
         features: '',
         isPopular: false
       });
-      
+
       setIsAddingPlan(false);
-      
+
       toast({
         title: 'Plan added',
         description: 'The pricing plan has been added successfully.',
@@ -133,7 +148,7 @@ const SubscriptionsSection = () => {
       setIsLoading(false);
     }
   };
-  
+
   const handleEditPlan = (plan) => {
     setSelectedPlan(plan);
     setEditPlan({
@@ -147,7 +162,7 @@ const SubscriptionsSection = () => {
     });
     setIsEditingPlan(true);
   };
-  
+
   const handleUpdatePlan = async () => {
     if (!editPlan.name || !editPlan.description || !editPlan.price || !editPlan.duration || !editPlan.features) {
       toast({
@@ -157,38 +172,34 @@ const SubscriptionsSection = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      // In a real app, you would update the plan in your database
-      // For now, we'll just simulate updating a plan
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // Update the plan in the database
+
       const featuresArray = editPlan.features.split('\\n').map(feature => feature.trim()).filter(Boolean);
-      
-      const updatedPlans = plans.map(plan => {
-        if (plan.id === editPlan.id) {
-          return {
-            ...plan,
-            name: editPlan.name,
-            description: editPlan.description,
-            price: parseFloat(editPlan.price),
-            duration: parseInt(editPlan.duration),
-            features: featuresArray,
-            isPopular: editPlan.isPopular,
-            lastUpdated: new Date().toISOString().split('T')[0]
-          };
-        }
-        return plan;
-      });
-      
-      setPlans(updatedPlans);
-      
+
+      const { error } = await supabase
+        .from('pricing_plans')
+        .update({
+          name: editPlan.name,
+          description: editPlan.description,
+          price: parseFloat(editPlan.price),
+          duration: parseInt(editPlan.duration),
+          features: featuresArray,
+          is_popular: editPlan.isPopular,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editPlan.id);
+
+      if (error) throw error;
+
+      // Refresh plans list
+      await fetchPlans();
+
       setIsEditingPlan(false);
-      
+
       toast({
         title: 'Plan updated',
         description: 'The pricing plan has been updated successfully.',
@@ -203,23 +214,41 @@ const SubscriptionsSection = () => {
       setIsLoading(false);
     }
   };
-  
+
   const handleDeletePlan = async (planId) => {
     if (!confirm('Are you sure you want to delete this plan?')) {
       return;
     }
-    
+
     try {
-      // In a real app, you would delete the plan from your database
-      // For now, we'll just simulate deleting a plan
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const updatedPlans = plans.filter(plan => plan.id !== planId);
-      
-      setPlans(updatedPlans);
-      
+      // Check if the plan is being used by any subscriptions
+      const { data: subscriptions, error: checkError } = await supabase
+        .from('user_subscriptions')
+        .select('id')
+        .eq('plan_id', planId);
+
+      if (checkError) throw checkError;
+
+      if (subscriptions && subscriptions.length > 0) {
+        toast({
+          title: 'Cannot delete plan',
+          description: 'This plan is currently being used by one or more users. Please update their subscriptions first.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Delete the plan from the database
+      const { error } = await supabase
+        .from('pricing_plans')
+        .delete()
+        .eq('id', planId);
+
+      if (error) throw error;
+
+      // Refresh plans list
+      await fetchPlans();
+
       toast({
         title: 'Plan deleted',
         description: 'The pricing plan has been deleted successfully.',
@@ -232,7 +261,7 @@ const SubscriptionsSection = () => {
       });
     }
   };
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -324,6 +353,8 @@ const SubscriptionsSection = () => {
                       checked={newPlan.isPopular}
                       onChange={(e) => setNewPlan({ ...newPlan, isPopular: e.target.checked })}
                       className="rounded border-gray-300"
+                      title="Mark as popular plan"
+                      aria-label="Mark as popular plan"
                     />
                     <Label htmlFor="isPopular">Mark as Popular</Label>
                   </div>
@@ -362,7 +393,13 @@ const SubscriptionsSection = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {plans.length === 0 ? (
+                {isLoadingPlans ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-marketing-blue" />
+                    </TableCell>
+                  </TableRow>
+                ) : plans.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No pricing plans found
@@ -422,7 +459,7 @@ const SubscriptionsSection = () => {
           </p>
         </CardFooter>
       </Card>
-      
+
       {/* Edit Plan Dialog */}
       <Dialog open={isEditingPlan} onOpenChange={setIsEditingPlan}>
         <DialogContent>
@@ -488,6 +525,8 @@ const SubscriptionsSection = () => {
                 checked={editPlan.isPopular}
                 onChange={(e) => setEditPlan({ ...editPlan, isPopular: e.target.checked })}
                 className="rounded border-gray-300"
+                title="Mark as popular plan"
+                aria-label="Mark as popular plan"
               />
               <Label htmlFor="edit-isPopular">Mark as Popular</Label>
             </div>

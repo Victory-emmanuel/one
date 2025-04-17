@@ -27,23 +27,109 @@ const AdminDashboardPage = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // In a real app, you would fetch this from your database
-        // For now, we'll simulate dashboard data
-        
-        // Simulate client stats
+        setLoading(true);
+
+        // Fetch client stats
+        const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
+
+        if (usersError) throw usersError;
+
+        // Get total clients count
+        const totalClients = usersData.users.length;
+
+        // Get new signups (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const newSignups = usersData.users.filter(user =>
+          new Date(user.created_at) >= thirtyDaysAgo
+        ).length;
+
+        // Fetch subscription stats
+        const { data: subscriptionsData, error: subscriptionsError } = await supabase
+          .from('user_subscriptions')
+          .select('*, plan:pricing_plans(*)');
+
+        if (subscriptionsError) throw subscriptionsError;
+
+        // Get active subscriptions count
+        const activeSubscriptions = subscriptionsData.filter(sub =>
+          sub.status === 'active'
+        ).length;
+
+        // Get trial clients count
+        const trialClients = subscriptionsData.filter(sub =>
+          sub.status === 'trial'
+        ).length;
+
         setClientStats({
-          totalClients: 156,
-          newSignups: 24,
-          activeSubscriptions: 132,
-          trialClients: 48
+          totalClients,
+          newSignups,
+          activeSubscriptions,
+          trialClients
         });
-        
-        // Simulate revenue stats
+
+        // Calculate revenue stats
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthFirstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthLastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        // Calculate total revenue
+        const totalRevenue = subscriptionsData.reduce((sum, sub) => {
+          if (sub.status === 'active' && sub.plan) {
+            return sum + (sub.plan.price || 0);
+          }
+          return sum;
+        }, 0);
+
+        // Calculate monthly revenue (current month)
+        const monthlyRevenue = subscriptionsData.reduce((sum, sub) => {
+          if (sub.status === 'active' && sub.plan &&
+              new Date(sub.created_at) <= now &&
+              new Date(sub.created_at) >= firstDayOfMonth) {
+            return sum + (sub.plan.price || 0);
+          }
+          return sum;
+        }, 0);
+
+        // Calculate last month's revenue for growth rate
+        const lastMonthRevenue = subscriptionsData.reduce((sum, sub) => {
+          if (sub.status === 'active' && sub.plan &&
+              new Date(sub.created_at) >= lastMonthFirstDay &&
+              new Date(sub.created_at) <= lastMonthLastDay) {
+            return sum + (sub.plan.price || 0);
+          }
+          return sum;
+        }, 0);
+
+        // Calculate growth rate
+        const growthRate = lastMonthRevenue > 0 ?
+          ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
+
+        // Find top plan
+        const planCounts = {};
+        subscriptionsData.forEach(sub => {
+          if (sub.plan) {
+            const planName = sub.plan.name;
+            planCounts[planName] = (planCounts[planName] || 0) + 1;
+          }
+        });
+
+        let topPlan = '';
+        let maxCount = 0;
+
+        Object.entries(planCounts).forEach(([plan, count]) => {
+          if (count > maxCount) {
+            maxCount = count;
+            topPlan = plan;
+          }
+        });
+
         setRevenueStats({
-          totalRevenue: 12580,
-          monthlyRevenue: 3450,
-          topPlan: 'Pro',
-          growthRate: 12.5
+          totalRevenue,
+          monthlyRevenue,
+          topPlan,
+          growthRate: parseFloat(growthRate.toFixed(1))
         });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -69,7 +155,7 @@ const AdminDashboardPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <motion.div 
+        <motion.div
           className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
           variants={{
             hidden: { opacity: 0 },
@@ -191,11 +277,11 @@ const AdminDashboardPage = () => {
             <TabsTrigger value="clients">Client Growth</TabsTrigger>
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="reports" className="space-y-4">
             <ReportsSection />
           </TabsContent>
-          
+
           <TabsContent value="clients" className="space-y-4">
             <Card>
               <CardHeader>
@@ -209,7 +295,7 @@ const AdminDashboardPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="revenue" className="space-y-4">
             <Card>
               <CardHeader>

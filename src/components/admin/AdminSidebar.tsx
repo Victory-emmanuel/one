@@ -1,13 +1,13 @@
-import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { 
-  BarChart3, 
-  Users, 
-  CreditCard, 
-  DollarSign, 
-  MessageSquare, 
-  Settings, 
-  LogOut, 
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+// import { motion } from 'framer-motion';
+import {
+  BarChart3,
+  Users,
+  CreditCard,
+  DollarSign,
+  MessageSquare,
+  Settings,
+  LogOut,
   ChevronLeft,
   Mail
 } from 'lucide-react';
@@ -22,57 +22,69 @@ interface AdminSidebarProps {
 const AdminSidebar = ({ open, setOpen }: AdminSidebarProps) => {
   const { signOut } = useAuth();
   const location = useLocation();
-  
+  const navigate = useNavigate();
+
+  // Manual logout function as a fallback
+  const handleManualLogout = () => {
+    // Clear all localStorage items related to Supabase
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('supabase.')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Navigate to home page
+    navigate('/');
+
+    // Reload the page to ensure all state is reset
+    window.location.reload();
+  };
+
   const navItems = [
-    { 
-      name: 'Reports & Analytics', 
-      icon: <BarChart3 className="h-5 w-5" />, 
-      path: '/admin' 
+    {
+      name: 'Reports & Analytics',
+      icon: <BarChart3 className="h-5 w-5" />,
+      path: '/admin'
     },
-    { 
-      name: 'Clients', 
-      icon: <Users className="h-5 w-5" />, 
-      path: '/admin/clients' 
+    {
+      name: 'Clients',
+      icon: <Users className="h-5 w-5" />,
+      path: '/admin/clients'
     },
-    { 
-      name: 'Subscriptions', 
-      icon: <CreditCard className="h-5 w-5" />, 
-      path: '/admin/subscriptions' 
+    {
+      name: 'Subscriptions',
+      icon: <CreditCard className="h-5 w-5" />,
+      path: '/admin/subscriptions'
     },
-    { 
-      name: 'Revenue', 
-      icon: <DollarSign className="h-5 w-5" />, 
-      path: '/admin/revenue' 
+    {
+      name: 'Revenue',
+      icon: <DollarSign className="h-5 w-5" />,
+      path: '/admin/revenue'
     },
-    { 
-      name: 'Complaints', 
-      icon: <MessageSquare className="h-5 w-5" />, 
-      path: '/admin/complaints' 
+    {
+      name: 'Complaints',
+      icon: <MessageSquare className="h-5 w-5" />,
+      path: '/admin/complaints'
     },
-    { 
-      name: 'Email Analytics', 
-      icon: <Mail className="h-5 w-5" />, 
-      path: '/admin/email-analytics' 
+    {
+      name: 'Email Analytics',
+      icon: <Mail className="h-5 w-5" />,
+      path: '/admin/email-analytics'
     },
-    { 
-      name: 'Settings', 
-      icon: <Settings className="h-5 w-5" />, 
-      path: '/admin/settings' 
+    {
+      name: 'Settings',
+      icon: <Settings className="h-5 w-5" />,
+      path: '/admin/settings'
     },
   ];
 
-  const sidebarVariants = {
-    open: { width: '240px', transition: { duration: 0.3 } },
-    closed: { width: '80px', transition: { duration: 0.3 } }
-  };
+  // const sidebarVariants = {
+  //   open: { width: '240px', transition: { duration: 0.3 } },
+  //   closed: { width: '80px', transition: { duration: 0.3 } }
+  // };
 
   return (
-    <motion.div 
-      className="bg-marketing-dark text-white border-r border-gray-800 z-30 h-screen flex-shrink-0 overflow-hidden"
-      initial={open ? 'open' : 'closed'}
-      animate={open ? 'open' : 'closed'}
-      variants={sidebarVariants}
-    >
+    <div className={`bg-marketing-dark text-white border-r border-gray-800 z-30 h-screen flex-shrink-0 overflow-hidden ${open ? 'w-60' : 'w-20'}`}>
       <div className="flex flex-col h-full">
         {/* Logo and collapse button */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
@@ -83,9 +95,12 @@ const AdminSidebar = ({ open, setOpen }: AdminSidebarProps) => {
               </span>
             </Link>
           )}
-          <button 
-            onClick={() => setOpen(!open)} 
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
             className="p-2 rounded-md hover:bg-gray-700 transition-colors"
+            title="Toggle sidebar"
+            aria-label="Toggle sidebar"
           >
             <ChevronLeft className={cn("h-5 w-5 text-gray-300 transition-transform", !open && "rotate-180")} />
           </button>
@@ -100,8 +115,8 @@ const AdminSidebar = ({ open, setOpen }: AdminSidebarProps) => {
                   to={item.path}
                   className={cn(
                     "flex items-center px-3 py-2 rounded-md transition-colors",
-                    location.pathname === item.path 
-                      ? "bg-marketing-blue text-white" 
+                    location.pathname === item.path
+                      ? "bg-marketing-blue text-white"
                       : "text-gray-300 hover:bg-gray-700"
                   )}
                 >
@@ -113,18 +128,32 @@ const AdminSidebar = ({ open, setOpen }: AdminSidebarProps) => {
           </ul>
         </nav>
 
-        {/* Logout button */}
-        <div className="p-4 border-t border-gray-700">
+        {/* Logout buttons */}
+        <div className="p-4 border-t border-gray-700 space-y-2">
           <button
+            type="button"
             onClick={signOut}
             className="flex items-center w-full px-3 py-2 text-gray-300 rounded-md hover:bg-gray-700 transition-colors"
+            title="Logout"
+            aria-label="Logout"
           >
             <LogOut className="h-5 w-5" />
             {open && <span className="ml-3">Logout</span>}
           </button>
+
+          <button
+            type="button"
+            onClick={handleManualLogout}
+            className="flex items-center w-full px-3 py-2 text-gray-300 rounded-md hover:bg-gray-700 transition-colors"
+            title="Force Logout"
+            aria-label="Force Logout"
+          >
+            <LogOut className="h-5 w-5" />
+            {open && <span className="ml-3">Force Logout</span>}
+          </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
