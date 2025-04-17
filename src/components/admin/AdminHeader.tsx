@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import AdminAccessButton from './AdminAccessButton';
 
 interface AdminHeaderProps {
   sidebarOpen: boolean;
@@ -74,6 +75,11 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }: AdminHeaderProps) => {
               <Badge variant="outline" className="ml-2 bg-marketing-blue text-white">
                 Admin
               </Badge>
+
+              {/* Admin Access Button */}
+              <div className="ml-4">
+                <AdminAccessButton />
+              </div>
             </div>
           </div>
 

@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, CreditCard, DollarSign, BarChart3, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseAdmin } from '@/integrations/supabase/adminClient';
 import ReportsSection from '@/components/admin/ReportsSection';
+import { toast } from '@/components/ui/use-toast';
 
 const AdminDashboardPage = () => {
   const { user, profile } = useAuth();
+  const { adminFunctions, isAdminLoaded } = useAdminAuth();
   const [clientStats, setClientStats] = useState({
     totalClients: 0,
     newSignups: 0,
@@ -29,10 +33,17 @@ const AdminDashboardPage = () => {
       try {
         setLoading(true);
 
-        // Fetch client stats
-        const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
+        // Fetch client stats using adminFunctions
+        const usersData = await adminFunctions.listUsers();
 
-        if (usersError) throw usersError;
+        if (!usersData) {
+          toast({
+            title: 'Error fetching users',
+            description: 'Could not load user data. Please try again later.',
+            variant: 'destructive',
+          });
+          return;
+        }
 
         // Get total clients count
         const totalClients = usersData.users.length;
@@ -44,8 +55,9 @@ const AdminDashboardPage = () => {
           new Date(user.created_at) >= thirtyDaysAgo
         ).length;
 
-        // Fetch subscription stats
-        const { data: subscriptionsData, error: subscriptionsError } = await supabase
+        // Fetch subscription stats using supabaseAdmin to bypass RLS
+        // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
+        const { data: subscriptionsData, error: subscriptionsError } = await supabaseAdmin
           .from('user_subscriptions')
           .select('*, plan:pricing_plans(*)');
 
@@ -138,8 +150,10 @@ const AdminDashboardPage = () => {
       }
     };
 
-    fetchDashboardData();
-  }, []);
+    if (isAdminLoaded) {
+      fetchDashboardData();
+    }
+  }, [isAdminLoaded, adminFunctions]);
 
   return (
     <AdminLayout>

@@ -102,6 +102,16 @@ const AuthLogin = () => {
       <div className="text-center text-sm text-gray-500">
         Don't have an account? <Link to="/auth?tab=register" className="text-marketing-blue hover:underline">Sign up</Link>
       </div>
+
+      {/* Admin access link - only visible to specific admin */}
+      {email === 'marketinglot.blog@gmail.com' && (
+        <div className="mt-4 text-center text-xs">
+          <Link to="/admin-login" className="text-gray-400 hover:text-marketing-blue hover:underline flex items-center justify-center">
+            <span className="inline-block w-1 h-1 rounded-full bg-gray-400 mr-1"></span>
+            Admin Access
+          </Link>
+        </div>
+      )}
     </form>
   );
 };

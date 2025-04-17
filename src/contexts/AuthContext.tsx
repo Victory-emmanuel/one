@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { getAdminSessionKey } from '@/constants/auth';
 
 type AuthContextType = {
   session: Session | null;
@@ -68,7 +69,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
       } else {
         setProfile(data);
-        setIsAdmin(data?.is_admin || false);
+
+        // Check for admin status in profile, user metadata, and JWT claims
+        const isAdminInProfile = data?.is_admin === true || data?.role === 'admin';
+        const isAdminInMetadata = user?.user_metadata?.role === 'admin' || user?.user_metadata?.is_admin === true;
+
+        // Special case for our specific admin user
+        const isSpecificAdmin = userId === '9b2d6b23-213e-44bf-9f30-b36164239fee' &&
+                               user?.email === 'marketinglot.blog@gmail.com';
+
+        // Log admin status for debugging
+        console.log('Admin status check:', {
+          userId,
+          email: user?.email,
+          isAdminInProfile,
+          isAdminInMetadata,
+          isSpecificAdmin,
+          profileData: data,
+          userMetadata: user?.user_metadata
+        });
+
+        // Set admin status if any source indicates admin or if it's our specific admin user
+        setIsAdmin(isAdminInProfile || isAdminInMetadata || isSpecificAdmin);
+
+        // If this is our specific admin user, update their profile to ensure they have admin status
+        if (isSpecificAdmin && !isAdminInProfile) {
+          console.log('Updating admin status for specific admin user');
+          try {
+            await supabase
+              .from('profiles')
+              .update({
+                is_admin: true,
+                role: 'admin',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', userId);
+          } catch (error) {
+            console.error('Error updating admin status:', error);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -86,6 +125,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      // Clear admin access session if it exists
+      if (user) {
+        const adminSessionKey = getAdminSessionKey(user.id);
+        localStorage.removeItem(adminSessionKey);
+      }
+
       // Try the standard signOut method first
       try {
         await supabase.auth.signOut({ scope: 'local' });

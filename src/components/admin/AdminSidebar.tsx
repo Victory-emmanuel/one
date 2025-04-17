@@ -9,7 +9,8 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
-  Mail
+  Mail,
+  UserCog
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,11 @@ const AdminSidebar = ({ open, setOpen }: AdminSidebarProps) => {
       name: 'Clients',
       icon: <Users className="h-5 w-5" />,
       path: '/admin/clients'
+    },
+    {
+      name: 'User Management',
+      icon: <UserCog className="h-5 w-5" />,
+      path: '/admin/users'
     },
     {
       name: 'Subscriptions',

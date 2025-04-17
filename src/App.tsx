@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 
 // Public Pages
 import Index from "./pages/Index";
@@ -33,6 +34,8 @@ import RevenuePage from "./pages/admin/RevenuePage";
 import ComplaintsPage from "./pages/admin/ComplaintsPage";
 import EmailAnalyticsPage from "./pages/admin/EmailAnalyticsPage";
 import AdminSettingsPage from "./pages/admin/SettingsPage";
+import UsersManagementPage from "./pages/admin/UsersManagementPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
 
 const queryClient = new QueryClient();
 
@@ -50,7 +53,8 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
+            <AdminAuthProvider>
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/services" element={<ServicesPage />} />
@@ -59,6 +63,7 @@ const App = () => {
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/admin-login" element={<AdminLoginPage />} />
 
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={<DashboardPage />} />
@@ -76,10 +81,12 @@ const App = () => {
               <Route path="/admin/complaints" element={<ComplaintsPage />} />
               <Route path="/admin/email-analytics" element={<EmailAnalyticsPage />} />
               <Route path="/admin/settings" element={<AdminSettingsPage />} />
+              <Route path="/admin/users" element={<UsersManagementPage />} />
 
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
+              </Routes>
+            </AdminAuthProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

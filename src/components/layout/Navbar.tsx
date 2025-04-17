@@ -9,6 +9,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 
 const Navbar = () => {
   const { user, profile, signOut, isAdmin } = useAuth();
+
+  // Check if this is the specific admin user
+  const isSpecificAdmin = user?.id === '9b2d6b23-213e-44bf-9f30-b36164239fee' &&
+                         user?.email === 'marketinglot.blog@gmail.com';
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -132,6 +136,11 @@ const Navbar = () => {
                   <Button variant="outline" className="border-marketing-blue text-marketing-blue hover:bg-marketing-blue hover:text-white">
                     <UserPlus className="mr-2 h-4 w-4" /> Sign Up
                   </Button>
+                </Link>
+                {/* Special admin login link */}
+                <Link to="/admin-login" className="text-xs text-gray-400 hover:text-marketing-blue absolute -bottom-5 left-1/2 transform -translate-x-1/2">
+                  <Shield className="h-3 w-3 inline mr-1" />
+                  <span>Admin</span>
                 </Link>
               </>
             )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,23 +7,74 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MessageSquare, ThumbsUp, ThumbsDown, Filter, Calendar, User } from 'lucide-react';
+import { Loader2, Search, MessageSquare, ThumbsUp, ThumbsDown, Filter, Calendar } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+interface FeedbackItem {
+  id: string;
+  user_id: string;
+  feedback_type: string;
+  feedback_text: string;
+  satisfaction?: string | null;
+  rating?: number | null;
+  status?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface FeedbackReply {
+  id: string;
+  feedback_id: string;
+  user_id: string;
+  is_admin: boolean;
+  reply_text: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface UserProfile {
+  id: string;
+  full_name?: string | null;
+  email?: string;
+  avatar_url?: string | null;
+}
+
+interface ProcessedFeedback {
+  id: string;
+  type: string;
+  text: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+  };
+  date: string;
+  status: string;
+  replies: ProcessedReply[];
+}
+
+interface ProcessedReply {
+  id: string;
+  text: string;
+  date: string;
+  admin: boolean;
+}
 
 const ComplaintsSection = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
-  const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [selectedFeedback, setSelectedFeedback] = useState<ProcessedFeedback | null>(null);
   const [replyText, setReplyText] = useState('');
   const [isReplying, setIsReplying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [feedbackItems, setFeedbackItems] = useState([]);
+  const [feedbackItems, setFeedbackItems] = useState<ProcessedFeedback[]>([]);
 
   useEffect(() => {
     fetchFeedback();
@@ -32,50 +83,113 @@ const ComplaintsSection = () => {
   const fetchFeedback = async () => {
     setIsLoading(true);
     try {
-      // Fetch all feedback from the database
+      // First, get all client user IDs
+      // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
+      const { data: clientProfiles, error: clientsError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'client');
+
+      if (clientsError) {
+        console.error('Error fetching client profiles:', clientsError);
+        throw clientsError;
+      }
+
+      if (!clientProfiles || clientProfiles.length === 0) {
+        console.log('No client profiles found');
+        setFeedbackItems([]);
+        return;
+      }
+
+      // Extract client IDs
+      const clientIds = clientProfiles.map(profile => profile.id);
+      console.log('Found client IDs:', clientIds);
+
+      // Fetch all feedback from clients
+      // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
       const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedback')
-        .select('*, user:profiles(id, full_name, email, avatar_url)')
+        .select('*')
+        .in('user_id', clientIds)
         .order('created_at', { ascending: false });
 
-      if (feedbackError) throw feedbackError;
+      if (feedbackError) {
+        console.error('Error fetching feedback:', feedbackError);
+        throw feedbackError;
+      }
 
-      // Fetch replies for each feedback
-      const feedbackWithReplies = await Promise.all(
-        feedbackData.map(async (feedback) => {
-          const { data: repliesData, error: repliesError } = await supabase
-            .from('feedback_replies')
-            .select('*, profile:profiles(full_name, avatar_url)')
-            .eq('feedback_id', feedback.id)
-            .order('created_at', { ascending: true });
+      console.log('Fetched feedback data:', feedbackData?.length || 0, 'items');
 
-          if (repliesError) throw repliesError;
+      // Process each feedback item
+      const processedFeedback: ProcessedFeedback[] = [];
 
-          // Transform the data to match the expected format
-          return {
-            id: feedback.id,
-            type: feedback.feedback_type,
-            text: feedback.feedback_text,
-            user: {
-              id: feedback.user.id,
-              name: feedback.user.full_name || 'Unknown User',
-              email: feedback.user.email || '',
-              avatar: feedback.user.avatar_url || ''
-            },
-            date: new Date(feedback.created_at).toISOString().split('T')[0],
-            status: feedback.status || 'pending',
-            replies: repliesData.map(reply => ({
+      // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
+      for (const feedback of feedbackData || []) {
+        // Fetch user profile separately
+        // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
+        const { data: userData, error: userError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, avatar_url')
+          .eq('id', feedback.user_id)
+          .single();
+
+        if (userError) {
+          console.error('Error fetching user profile:', userError);
+          // Continue with default user data
+        }
+
+        // Fetch replies
+        // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
+        const { data: repliesData, error: repliesError } = await supabase
+          .from('feedback_replies')
+          .select('*')
+          .eq('feedback_id', feedback.id)
+          .order('created_at', { ascending: true });
+
+        if (repliesError) {
+          console.error('Error fetching replies:', repliesError);
+          // Continue with empty replies
+        }
+
+        // Process replies
+        const processedReplies: ProcessedReply[] = [];
+
+        if (repliesData && repliesData.length > 0) {
+          // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
+          for (const reply of repliesData) {
+            processedReplies.push({
               id: reply.id,
               text: reply.reply_text,
               date: new Date(reply.created_at).toISOString().split('T')[0],
               admin: reply.is_admin
-            }))
-          };
-        })
-      );
+            });
+          }
+        }
 
-      setFeedbackItems(feedbackWithReplies);
-    } catch (error) {
+        // Add processed feedback item
+        processedFeedback.push({
+          id: feedback.id,
+          type: feedback.feedback_type,
+          text: feedback.feedback_text,
+          user: {
+            id: feedback.user_id,
+            // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
+            name: userData?.full_name || 'Unknown User',
+            // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
+            email: userData?.email || '',
+            // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
+            avatar: userData?.avatar_url || ''
+          },
+          date: new Date(feedback.created_at).toISOString().split('T')[0],
+          status: feedback.status || 'pending',
+          replies: processedReplies
+        });
+      }
+
+      setFeedbackItems(processedFeedback);
+      console.log('Feedback items loaded:', processedFeedback.length);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       console.error('Error fetching feedback:', error);
       toast({
         title: 'Error fetching feedback',
@@ -117,7 +231,7 @@ const ComplaintsSection = () => {
     }
   });
 
-  const handleReply = (feedback) => {
+  const handleReply = (feedback: ProcessedFeedback) => {
     setSelectedFeedback(feedback);
     setReplyText('');
     setIsReplying(true);
@@ -137,6 +251,7 @@ const ComplaintsSection = () => {
 
     try {
       // Add the reply to the database
+      // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
       const { data: replyData, error: replyError } = await supabase
         .from('feedback_replies')
         .insert({
@@ -152,6 +267,7 @@ const ComplaintsSection = () => {
       if (replyError) throw replyError;
 
       // Update the feedback status
+      // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
       const { error: updateError } = await supabase
         .from('feedback')
         .update({ status: 'acknowledged' })
@@ -169,10 +285,11 @@ const ComplaintsSection = () => {
         title: 'Reply sent',
         description: 'Your reply has been sent successfully.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       toast({
         title: 'Error sending reply',
-        description: error.message || 'An error occurred while sending your reply.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -180,9 +297,10 @@ const ComplaintsSection = () => {
     }
   };
 
-  const handleUpdateStatus = async (feedbackId, newStatus) => {
+  const handleUpdateStatus = async (feedbackId: string, newStatus: string) => {
     try {
       // Update the status in the database
+      // @ts-ignore - Using any type because the database schema is not fully defined in TypeScript
       const { error } = await supabase
         .from('feedback')
         .update({ status: newStatus })
@@ -197,16 +315,17 @@ const ComplaintsSection = () => {
         title: 'Status updated',
         description: `Feedback status has been updated to ${newStatus}.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       toast({
         title: 'Error updating status',
-        description: error.message || 'An error occurred while updating the status.',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
         return <Badge className="bg-yellow-500">Pending</Badge>;
@@ -221,7 +340,7 @@ const ComplaintsSection = () => {
     }
   };
 
-  const getTypeIcon = (type) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
       case 'complaint':
         return <ThumbsDown className="h-4 w-4 text-red-500" />;
@@ -234,21 +353,16 @@ const ComplaintsSection = () => {
     }
   };
 
-  const getInitials = (name) => {
+  const getInitials = (name: string) => {
     return name
       .split(' ')
-      .map(n => n[0])
+      .map((n: string) => n[0])
       .join('')
       .toUpperCase();
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -474,7 +588,7 @@ const ComplaintsSection = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   );
 };
 

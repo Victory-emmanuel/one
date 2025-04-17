@@ -9,11 +9,35 @@ import { CheckCircle2, AlertCircle, CreditCard, CalendarDays, Clock, Loader2 } f
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
+// Define types for subscription data
+type PricingPlan = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  features: string[] | { features: string[] } | string;
+  is_popular: boolean;
+};
+
+type Subscription = {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  status: 'trial' | 'active' | 'inactive';
+  trial_end_date?: string;
+  current_period_start?: string;
+  current_period_end?: string;
+  created_at: string;
+  updated_at: string;
+  plan?: PricingPlan;
+};
+
 const SubscriptionSection = () => {
   const { user } = useAuth();
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [trialPercentLeft, setTrialPercentLeft] = useState<number>(100);
-  const [subscription, setSubscription] = useState<any>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -139,7 +163,18 @@ const SubscriptionSection = () => {
       }
     };
 
+    // Initial fetch
     fetchSubscriptionData();
+
+    // Set up an interval to refresh subscription data every 30 seconds
+    const intervalId = setInterval(() => {
+      if (user) {
+        fetchSubscriptionData();
+      }
+    }, 30000); // 30 seconds
+
+    // Clean up on unmount
+    return () => clearInterval(intervalId);
   }, [user]);
 
   // Get color based on days left

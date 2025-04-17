@@ -12,29 +12,61 @@ import { Loader2, Plus, Search, UserPlus, Edit, Trash2, MoreHorizontal } from 'l
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseAdmin } from '@/integrations/supabase/adminClient';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 const ClientsSection = () => {
+  const { adminFunctions, isAdminLoaded } = useAdminAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [timeFilter, setTimeFilter] = useState('all');
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [clients, setClients] = useState([]);
+  // Define a type for client data
+  type ClientData = {
+    id: string;
+    name: string;
+    email: string;
+    plan: string;
+    status: string;
+    signupDate: string;
+    avatar: string;
+    user_metadata?: Record<string, unknown>;
+  };
+
+  const [clients, setClients] = useState<ClientData[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
 
+  // States for editing client
+  const [isEditingClient, setIsEditingClient] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<ClientData | null>(null);
+  const [editClientData, setEditClientData] = useState({
+    name: '',
+    email: '',
+    plan: 'Basic',
+    status: 'active'
+  });
+
+  // States for deleting client
+  const [isDeletingClient, setIsDeletingClient] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<ClientData | null>(null);
+
   useEffect(() => {
-    fetchClients();
-  }, []);
+    if (isAdminLoaded) {
+      fetchClients();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdminLoaded, adminFunctions]);
 
   const fetchClients = async () => {
     setIsLoadingClients(true);
     try {
-      // Fetch all users from the auth.users table
-      const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+      // Fetch all users using the AdminAuthContext
+      const userData = await adminFunctions.listUsers();
 
-      if (userError) {
+      if (!userData || !userData.users) {
         // If admin API fails, try to get users from profiles table instead
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
@@ -56,9 +88,10 @@ const ClientsSection = () => {
         });
 
         setClients(clientsData);
+        console.log('Loaded clients from profiles:', clientsData.length);
       } else {
-        // Get subscription data for each user
-        const { data: subscriptionsData, error: subscriptionsError } = await supabase
+        // Get subscription data for each user using supabaseAdmin to bypass RLS
+        const { data: subscriptionsData, error: subscriptionsError } = await supabaseAdmin
           .from('user_subscriptions')
           .select('*, plan:pricing_plans(*)');
 
@@ -74,10 +107,10 @@ const ClientsSection = () => {
         // Transform auth users data to match the expected format
         const clientsData = userData.users.map(user => {
           // Find subscription for this user
-          const subscription = subscriptionsData.find(sub => sub.user_id === user.id);
+          const subscription = subscriptionsData?.find(sub => sub.user_id === user.id);
 
           // Find profile for this user
-          const profile = profilesData.find(profile => profile.id === user.id);
+          const profile = profilesData?.find(profile => profile.id === user.id);
 
           return {
             id: user.id,
@@ -86,11 +119,13 @@ const ClientsSection = () => {
             plan: subscription?.plan?.name || 'Basic',
             status: subscription?.status || 'inactive',
             signupDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : '',
-            avatar: profile?.avatar_url || ''
+            avatar: profile?.avatar_url || '',
+            user_metadata: user.user_metadata || {}
           };
         });
 
         setClients(clientsData);
+        console.log('Loaded clients from auth users:', clientsData.length);
       }
     } catch (error) {
       console.error('Error fetching clients:', error);
@@ -159,17 +194,20 @@ const ClientsSection = () => {
     setIsLoading(true);
 
     try {
-      // Create a new user with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newClient.email,
-        email_confirm: true,
-        user_metadata: {
-          full_name: newClient.name
-        },
-        password: Math.random().toString(36).slice(-8) // Generate a random password
-      });
+      // Create a new user with AdminAuthContext
+      const userData = {
+        full_name: newClient.name,
+        role: 'client'
+      };
 
-      if (authError) throw authError;
+      // Generate a random password
+      const password = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+
+      const authData = await adminFunctions.createUser(newClient.email, password, userData);
+
+      if (!authData || !authData.user) {
+        throw new Error('Failed to create user');
+      }
 
       // Create a profile for the new user
       const { error: profileError } = await supabase
@@ -178,63 +216,22 @@ const ClientsSection = () => {
           id: authData.user.id,
           full_name: newClient.name,
           email: newClient.email,
+          role: 'client',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
 
       if (profileError) throw profileError;
 
-      // Create a subscription for the new user
-      const { data: planData, error: planError } = await supabase
-        .from('pricing_plans')
-        .select('id')
-        .eq('name', newClient.plan)
-        .single();
+      // Create a subscription for the new user using adminFunctions
+      const subscriptionCreated = await adminFunctions.updateUserSubscription(
+        authData.user.id,
+        newClient.plan,
+        newClient.status
+      );
 
-      if (planError) {
-        // If plan doesn't exist, create it
-        const { data: newPlan, error: createPlanError } = await supabase
-          .from('pricing_plans')
-          .insert({
-            name: newClient.plan,
-            description: `${newClient.plan} plan`,
-            price: newClient.plan === 'Basic' ? 9.99 : newClient.plan === 'Pro' ? 29.99 : 99.99,
-            duration: 30,
-            features: ['Feature 1', 'Feature 2', 'Feature 3'],
-            is_popular: newClient.plan === 'Pro',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (createPlanError) throw createPlanError;
-
-        // Create subscription with the new plan
-        const { error: subscriptionError } = await supabase
-          .from('user_subscriptions')
-          .insert({
-            user_id: authData.user.id,
-            plan_id: newPlan.id,
-            status: newClient.status,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (subscriptionError) throw subscriptionError;
-      } else {
-        // Create subscription with the existing plan
-        const { error: subscriptionError } = await supabase
-          .from('user_subscriptions')
-          .insert({
-            user_id: authData.user.id,
-            plan_id: planData.id,
-            status: newClient.status,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (subscriptionError) throw subscriptionError;
+      if (!subscriptionCreated) {
+        throw new Error('Failed to create subscription');
       }
 
       // Refresh clients list
@@ -254,7 +251,8 @@ const ClientsSection = () => {
         title: 'Client added',
         description: 'The client has been added successfully. A temporary password has been generated.',
       });
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Error adding client:', error);
       toast({
         title: 'Error adding client',
         description: error.message || 'An error occurred while adding the client.',
@@ -278,6 +276,131 @@ const ClientsSection = () => {
     }
   };
 
+  // Handle editing a client
+  const handleEditClient = async () => {
+    if (!selectedClient) return;
+
+    setIsLoading(true);
+
+    try {
+      // Update user metadata
+      const userData = await adminFunctions.updateUserById(selectedClient.id, {
+        user_metadata: {
+          ...selectedClient.user_metadata,
+          full_name: editClientData.name
+        }
+      });
+
+      if (!userData) {
+        throw new Error('Failed to update user');
+      }
+
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: editClientData.name,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedClient.id);
+
+      if (profileError) throw profileError;
+
+      // Update subscription status if needed
+      if (editClientData.plan !== selectedClient.plan || editClientData.status !== selectedClient.status) {
+        // Use the adminFunctions to update the subscription
+        const subscriptionUpdated = await adminFunctions.updateUserSubscription(
+          selectedClient.id,
+          editClientData.plan,
+          editClientData.status
+        );
+
+        if (!subscriptionUpdated) {
+          console.warn('Subscription update failed, but continuing with profile update');
+        } else {
+          console.log('Subscription updated successfully');
+        }
+      }
+
+      // Refresh clients list
+      await fetchClients();
+
+      // Reset state
+      setSelectedClient(null);
+      setEditClientData({
+        name: '',
+        email: '',
+        plan: 'Basic',
+        status: 'active'
+      });
+      setIsEditingClient(false);
+
+      toast({
+        title: 'Client updated',
+        description: 'The client has been updated successfully.',
+      });
+    } catch (error) {
+      console.error('Error updating client:', error);
+      toast({
+        title: 'Error updating client',
+        description: error.message || 'An error occurred while updating the client.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle deleting a client
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+
+    setIsLoading(true);
+
+    try {
+      // Delete user
+      const result = await adminFunctions.deleteUser(clientToDelete.id);
+
+      if (!result) {
+        throw new Error('Failed to delete user');
+      }
+
+      // Delete profile (should be handled by cascade delete)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', clientToDelete.id);
+
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+      }
+
+      // We don't need to explicitly delete subscriptions as they should be handled by cascade delete
+      // when the user is deleted. The database should have foreign key constraints set up properly.
+
+      // Refresh clients list
+      await fetchClients();
+
+      // Reset state
+      setClientToDelete(null);
+      setIsDeletingClient(false);
+
+      toast({
+        title: 'Client deleted',
+        description: 'The client has been deleted successfully.',
+      });
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      toast({
+        title: 'Error deleting client',
+        description: error.message || 'An error occurred while deleting the client.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -293,6 +416,130 @@ const ClientsSection = () => {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
+      {/* Edit Client Dialog */}
+      <Dialog open={isEditingClient} onOpenChange={setIsEditingClient}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Client</DialogTitle>
+            <DialogDescription>
+              Update client information
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Full Name</Label>
+              <Input
+                id="edit-name"
+                value={editClientData.name}
+                onChange={(e) => setEditClientData({ ...editClientData, name: e.target.value })}
+                placeholder="John Doe"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email Address</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editClientData.email}
+                disabled
+                className="bg-gray-100"
+              />
+              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-plan">Subscription Plan</Label>
+                <Select
+                  value={editClientData.plan}
+                  onValueChange={(value) => setEditClientData({ ...editClientData, plan: value })}
+                >
+                  <SelectTrigger id="edit-plan">
+                    <SelectValue placeholder="Select a plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Basic">Basic</SelectItem>
+                    <SelectItem value="Pro">Pro</SelectItem>
+                    <SelectItem value="Enterprise">Enterprise</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select
+                  value={editClientData.status}
+                  onValueChange={(value) => setEditClientData({ ...editClientData, status: value })}
+                >
+                  <SelectTrigger id="edit-status">
+                    <SelectValue placeholder="Select a status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="trial">Free Trial</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditingClient(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditClient} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Client'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Client Dialog */}
+      <Dialog open={isDeletingClient} onOpenChange={setIsDeletingClient}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Client</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this client? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {clientToDelete && (
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md">
+                <Avatar>
+                  <AvatarImage src={clientToDelete.avatar} alt={clientToDelete.name} />
+                  <AvatarFallback>{getInitials(clientToDelete.name)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium">{clientToDelete.name}</div>
+                  <div className="text-sm text-muted-foreground">{clientToDelete.email}</div>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeletingClient(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteClient} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Client'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -468,11 +715,26 @@ const ClientsSection = () => {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  setSelectedClient(client);
+                                  setEditClientData({
+                                    name: client.name,
+                                    email: client.email,
+                                    plan: client.plan,
+                                    status: client.status
+                                  });
+                                  setIsEditingClient(true);
+                                }}>
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-red-600"
+                                  onClick={() => {
+                                    setClientToDelete(client);
+                                    setIsDeletingClient(true);
+                                  }}
+                                >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Delete
                                 </DropdownMenuItem>

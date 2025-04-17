@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DollarSign, TrendingUp, CreditCard, Award, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseAdmin } from '@/integrations/supabase/adminClient';
 
 const RevenueSection = () => {
   const [timeFilter, setTimeFilter] = useState('month');
@@ -83,8 +84,8 @@ const RevenueSection = () => {
   const fetchRevenueData = async () => {
     setIsLoading(true);
     try {
-      // Fetch subscription data from the database
-      const { data: subscriptionsData, error: subscriptionsError } = await supabase
+      // Fetch subscription data from the database using supabaseAdmin to bypass RLS
+      const { data: subscriptionsData, error: subscriptionsError } = await supabaseAdmin
         .from('user_subscriptions')
         .select('*, plan:pricing_plans(*), user:profiles(*)');
 

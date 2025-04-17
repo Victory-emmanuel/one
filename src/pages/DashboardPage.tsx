@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarDays, CreditCard, Users, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import DirectAdminAccess from '@/components/admin/DirectAdminAccess';
 
 const DashboardPage = () => {
   const { user, profile } = useAuth();
@@ -19,17 +20,17 @@ const DashboardPage = () => {
       try {
         // In a real app, you would fetch this from your database
         // For now, we'll simulate a subscription with trial period
-        
+
         // Simulate fetching subscription data
         const createdAt = new Date(user.created_at || new Date());
         const trialEndDate = new Date(createdAt);
         trialEndDate.setDate(trialEndDate.getDate() + 30); // 30-day trial
-        
+
         const today = new Date();
         const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-        
+
         setTrialDaysLeft(daysLeft);
-        
+
         // Simulate subscription data
         setSubscription({
           plan: 'Free Trial',
@@ -51,6 +52,8 @@ const DashboardPage = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Direct Admin Access Component */}
+        <DirectAdminAccess />
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
@@ -62,7 +65,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <motion.div 
+        <motion.div
           className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
           variants={{
             hidden: { opacity: 0 },
@@ -95,8 +98,8 @@ const DashboardPage = () => {
                   {trialDaysLeft !== null ? `${trialDaysLeft} days left` : 'Loading...'}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {trialDaysLeft !== null && trialDaysLeft > 0 
-                    ? 'Your free trial is active' 
+                  {trialDaysLeft !== null && trialDaysLeft > 0
+                    ? 'Your free trial is active'
                     : 'Your trial has ended'}
                 </p>
                 {trialDaysLeft !== null && trialDaysLeft <= 7 && trialDaysLeft > 0 && (
