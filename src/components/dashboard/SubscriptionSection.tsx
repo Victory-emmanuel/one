@@ -4,7 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, AlertCircle, CreditCard, CalendarDays, Clock, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 const SubscriptionSection = () => {
   const { user } = useAuth();
@@ -18,39 +21,119 @@ const SubscriptionSection = () => {
       if (!user) return;
 
       try {
-        // In a real app, you would fetch this from your database
-        // For now, we'll simulate a subscription with trial period
-        
-        // Simulate fetching subscription data
-        const createdAt = new Date(user.created_at || new Date());
-        const trialEndDate = new Date(createdAt);
-        trialEndDate.setDate(trialEndDate.getDate() + 30); // 30-day trial
-        
-        const today = new Date();
-        const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-        const totalTrialDays = 30;
-        const daysUsed = totalTrialDays - daysLeft;
-        const percentLeft = Math.max(0, Math.min(100, (daysLeft / totalTrialDays) * 100));
-        
-        setTrialDaysLeft(daysLeft);
-        setTrialPercentLeft(percentLeft);
-        
-        // Simulate subscription data
-        setSubscription({
-          plan: 'Free Trial',
-          status: 'active',
-          startDate: createdAt.toISOString().split('T')[0],
-          endDate: trialEndDate.toISOString().split('T')[0],
-          features: [
-            'Basic Analytics',
-            'Email Support',
-            'Limited Access to Tools',
-            'Up to 3 Projects',
-            'Basic Reporting'
-          ]
-        });
+        // Check if user has a subscription
+        const { data: subscriptionData, error: subscriptionError } = await supabase
+          .from('user_subscriptions')
+          .select('*, plan:pricing_plans(*)')
+          .eq('user_id', user.id)
+          .single();
+
+        if (subscriptionError) {
+          if (subscriptionError.code === 'PGRST116') { // No subscription found
+            // Create a trial subscription for new users
+            // First, get the basic plan
+            const { data: basicPlan, error: planError } = await supabase
+              .from('pricing_plans')
+              .select('*')
+              .eq('name', 'Basic')
+              .single();
+
+            if (planError) {
+              // If no Basic plan exists, create one
+              const { data: newPlan, error: createPlanError } = await supabase
+                .from('pricing_plans')
+                .insert({
+                  name: 'Basic',
+                  description: 'For individuals just getting started',
+                  price: 9.99,
+                  duration: 30,
+                  features: ['Basic Analytics', 'Email Support', 'Up to 5 Projects'],
+                  is_popular: false,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+              if (createPlanError) throw createPlanError;
+
+              // Create trial subscription with the new plan
+              const trialEndDate = new Date();
+              trialEndDate.setDate(trialEndDate.getDate() + 14); // 14-day trial
+
+              const { data: newSubscription, error: createSubError } = await supabase
+                .from('user_subscriptions')
+                .insert({
+                  user_id: user.id,
+                  plan_id: newPlan.id,
+                  status: 'trial',
+                  trial_end_date: trialEndDate.toISOString(),
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .select('*, plan:pricing_plans(*)')
+                .single();
+
+              if (createSubError) throw createSubError;
+
+              setSubscription(newSubscription);
+
+              // Calculate days left in trial
+              const today = new Date();
+              const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+              setTrialDaysLeft(daysLeft);
+              setTrialPercentLeft((daysLeft / 14) * 100);
+            } else {
+              // Create trial subscription with the existing Basic plan
+              const trialEndDate = new Date();
+              trialEndDate.setDate(trialEndDate.getDate() + 14); // 14-day trial
+
+              const { data: newSubscription, error: createSubError } = await supabase
+                .from('user_subscriptions')
+                .insert({
+                  user_id: user.id,
+                  plan_id: basicPlan.id,
+                  status: 'trial',
+                  trial_end_date: trialEndDate.toISOString(),
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .select('*, plan:pricing_plans(*)')
+                .single();
+
+              if (createSubError) throw createSubError;
+
+              setSubscription(newSubscription);
+
+              // Calculate days left in trial
+              const today = new Date();
+              const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+              setTrialDaysLeft(daysLeft);
+              setTrialPercentLeft((daysLeft / 14) * 100);
+            }
+          } else {
+            throw subscriptionError;
+          }
+        } else {
+          // User has an existing subscription
+          setSubscription(subscriptionData);
+
+          // Calculate days left in trial if applicable
+          if (subscriptionData.status === 'trial' && subscriptionData.trial_end_date) {
+            const trialEndDate = new Date(subscriptionData.trial_end_date);
+            const today = new Date();
+            const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+            setTrialDaysLeft(daysLeft);
+            setTrialPercentLeft((daysLeft / 14) * 100);
+          }
+        }
       } catch (error) {
         console.error('Error fetching subscription data:', error);
+        toast({
+          title: 'Error loading subscription',
+          description: 'Could not load your subscription details. Please try again later.',
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }
@@ -74,68 +157,164 @@ const SubscriptionSection = () => {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      {/* Trial Status Card */}
+      {/* Subscription Details Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Free Trial Status</CardTitle>
-          <CardDescription>
-            Track your remaining trial period
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Subscription Details</CardTitle>
+              <CardDescription>
+                Manage your subscription and billing information
+              </CardDescription>
+            </div>
+            {loading ? (
+              <div className="h-6 w-16 bg-gray-200 animate-pulse rounded-full"></div>
+            ) : (
+              <Badge className={`${subscription?.status === 'active' ? 'bg-green-500' : subscription?.status === 'trial' ? 'bg-blue-500' : 'bg-gray-500'}`}>
+                {subscription?.status ? subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1) : 'Loading'}
+              </Badge>
+            )}
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {loading ? (
             <div className="flex items-center justify-center h-40">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-marketing-blue"></div>
+              <Loader2 className="h-8 w-8 animate-spin text-marketing-blue" />
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Days Remaining</p>
-                  <p className="text-3xl font-bold">
-                    {trialDaysLeft !== null ? trialDaysLeft : '--'}
-                  </p>
+              {/* Current Plan */}
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Current Plan</h3>
+                <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                  <div>
+                    <h4 className="font-medium">{subscription?.plan?.name || 'Basic'}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {subscription?.status === 'active' && subscription?.current_period_end ? (
+                        <>Your subscription renews on {new Date(subscription.current_period_end).toLocaleDateString()}</>
+                      ) : subscription?.status === 'trial' && subscription?.trial_end_date ? (
+                        <>Your trial ends on {new Date(subscription.trial_end_date).toLocaleDateString()}</>
+                      ) : (
+                        <>Your subscription is {subscription?.status}</>
+                      )}
+                    </p>
+                  </div>
+                  <Button variant="outline">Change Plan</Button>
                 </div>
-                
-                {trialDaysLeft !== null && (
-                  <div className={`p-3 rounded-full ${trialDaysLeft > 7 ? 'bg-green-100' : trialDaysLeft > 3 ? 'bg-orange-100' : 'bg-red-100'}`}>
-                    {trialDaysLeft > 7 ? (
-                      <CheckCircle2 className="h-6 w-6 text-green-500" />
+              </div>
+
+              {/* Trial Status */}
+              {subscription?.status === 'trial' && trialDaysLeft !== null && trialDaysLeft > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Trial Status</h3>
+                    <span className="text-sm text-muted-foreground">{trialDaysLeft} days left</span>
+                  </div>
+                  <Progress value={100 - trialPercentLeft} className="h-2" />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Days Remaining</p>
+                      <p className="text-xl font-bold">
+                        {trialDaysLeft}
+                      </p>
+                    </div>
+
+                    <div className={`p-3 rounded-full ${trialDaysLeft > 7 ? 'bg-green-100' : trialDaysLeft > 3 ? 'bg-orange-100' : 'bg-red-100'}`}>
+                      {trialDaysLeft > 7 ? (
+                        <CheckCircle2 className="h-6 w-6 text-green-500" />
+                      ) : (
+                        <AlertCircle className={`h-6 w-6 ${trialDaysLeft > 3 ? 'text-orange-500' : 'text-red-500'}`} />
+                      )}
+                    </div>
+                  </div>
+
+                  {trialDaysLeft <= 7 && (
+                    <div className={`p-4 rounded-md ${trialDaysLeft <= 3 ? 'bg-red-50 text-red-800' : 'bg-orange-50 text-orange-800'}`}>
+                      <p className="font-medium">
+                        {trialDaysLeft <= 3 ? 'Your trial is ending very soon!' : 'Your trial is ending soon!'}
+                      </p>
+                      <p className="text-sm mt-1">
+                        Upgrade now to continue enjoying our services without interruption.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Features */}
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Included Features</h3>
+                <ul className="space-y-2">
+                  {subscription?.plan?.features ? (
+                    typeof subscription.plan.features === 'string' ? (
+                      // Handle JSON string format
+                      JSON.parse(subscription.plan.features).features?.map((feature: string, index: number) => (
+                        <li key={index} className="flex items-center">
+                          <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
+                          <span>{feature}</span>
+                        </li>
+                      ))
+                    ) : Array.isArray(subscription.plan.features) ? (
+                      // Handle array format
+                      subscription.plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-center">
+                          <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
+                          <span>{feature}</span>
+                        </li>
+                      ))
                     ) : (
-                      <AlertCircle className={`h-6 w-6 ${trialDaysLeft > 3 ? 'text-orange-500' : 'text-red-500'}`} />
-                    )}
+                      // Handle object format with features property
+                      subscription.plan.features.features?.map((feature: string, index: number) => (
+                        <li key={index} className="flex items-center">
+                          <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
+                          <span>{feature}</span>
+                        </li>
+                      ))
+                    )
+                  ) : (
+                    <li className="flex items-center">
+                      <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
+                      <span>No features listed</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              {/* Payment Information */}
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Payment Information</h3>
+                {subscription?.status === 'trial' ? (
+                  <div className="flex items-center bg-gray-50 p-4 rounded-lg">
+                    <Clock className="h-5 w-5 text-blue-500 mr-2" />
+                    <span>No payment method required during trial</span>
+                    <Button variant="link" className="ml-auto">Add Payment Method</Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center bg-gray-50 p-4 rounded-lg">
+                    <CreditCard className="h-5 w-5 text-muted-foreground mr-2" />
+                    <span>Visa ending in 4242</span>
+                    <Button variant="link" className="ml-auto">Update</Button>
                   </div>
                 )}
               </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Trial Progress</span>
-                  <span>{Math.round(100 - trialPercentLeft)}%</span>
-                </div>
-                <Progress value={100 - trialPercentLeft} className="h-2" />
-              </div>
-              
-              <div className="flex justify-between text-sm">
-                <span>Start Date: {subscription?.startDate}</span>
-                <span>End Date: {subscription?.endDate}</span>
-              </div>
-              
-              {trialDaysLeft !== null && trialDaysLeft <= 7 && (
-                <div className={`p-4 rounded-md ${trialDaysLeft <= 3 ? 'bg-red-50 text-red-800' : 'bg-orange-50 text-orange-800'}`}>
-                  <p className="font-medium">
-                    {trialDaysLeft <= 3 ? 'Your trial is ending very soon!' : 'Your trial is ending soon!'}
-                  </p>
-                  <p className="text-sm mt-1">
-                    Upgrade now to continue enjoying our services without interruption.
-                  </p>
-                </div>
-              )}
             </>
           )}
         </CardContent>
-        <CardFooter>
-          <Button className="w-full">Upgrade to Pro</Button>
+        <CardFooter className="flex flex-col items-start border-t pt-6">
+          <p className="text-sm text-muted-foreground mb-4">
+            You can cancel your subscription at any time. If you cancel, you'll still have access until the end of your current billing period.
+          </p>
+          {subscription?.status === 'trial' ? (
+            <Button className="w-full">Upgrade to Pro</Button>
+          ) : (
+            <Button
+              variant="outline"
+              className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+              disabled={loading}
+            >
+              Cancel Subscription
+            </Button>
+          )}
         </CardFooter>
       </Card>
 

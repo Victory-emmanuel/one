@@ -14,22 +14,22 @@ import { supabase } from '@/integrations/supabase/client';
 
 const SettingsSection = () => {
   const { user, signOut } = useAuth();
-  
+
   // General settings
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [marketingEmails, setMarketingEmails] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-  
+
   // Security settings
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  
+
   // Account deletion
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  
+
   const handleSaveGeneralSettings = () => {
     // In a real app, you would save these settings to the database
     toast({
@@ -37,10 +37,10 @@ const SettingsSection = () => {
       description: 'Your preferences have been updated.',
     });
   };
-  
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast({
         title: 'Missing information',
@@ -49,7 +49,7 @@ const SettingsSection = () => {
       });
       return;
     }
-    
+
     if (newPassword !== confirmPassword) {
       toast({
         title: 'Passwords do not match',
@@ -58,21 +58,24 @@ const SettingsSection = () => {
       });
       return;
     }
-    
+
     setIsChangingPassword(true);
-    
+
     try {
-      // In a real app, you would verify the current password and update to the new one
-      // For now, we'll just simulate a successful password change
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      // Update password using Supabase Auth API
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
       // Reset form
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      
+
       toast({
         title: 'Password changed',
         description: 'Your password has been updated successfully.',
@@ -87,10 +90,10 @@ const SettingsSection = () => {
       setIsChangingPassword(false);
     }
   };
-  
+
   const handleDeleteAccount = async () => {
     if (!user) return;
-    
+
     if (deleteConfirmation !== user.email) {
       toast({
         title: 'Confirmation failed',
@@ -99,21 +102,21 @@ const SettingsSection = () => {
       });
       return;
     }
-    
+
     setIsDeletingAccount(true);
-    
+
     try {
       // In a real app, you would delete the user's account from the database
       // For now, we'll just simulate a successful account deletion
-      
+
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       toast({
         title: 'Account deleted',
         description: 'Your account has been deleted successfully.',
       });
-      
+
       // Sign out the user
       await signOut();
     } catch (error: any) {
@@ -126,7 +129,7 @@ const SettingsSection = () => {
       setIsDeletingAccount(false);
     }
   };
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -139,7 +142,7 @@ const SettingsSection = () => {
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
         </TabsList>
-        
+
         {/* General Settings */}
         <TabsContent value="general">
           <Card>
@@ -152,7 +155,7 @@ const SettingsSection = () => {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Notifications</h3>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="email-notifications">Email Notifications</Label>
@@ -166,7 +169,7 @@ const SettingsSection = () => {
                     onCheckedChange={setEmailNotifications}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="marketing-emails">Marketing Emails</Label>
@@ -181,10 +184,10 @@ const SettingsSection = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Appearance</h3>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="dark-mode">Dark Mode</Label>
@@ -207,7 +210,7 @@ const SettingsSection = () => {
             </CardFooter>
           </Card>
         </TabsContent>
-        
+
         {/* Security Settings */}
         <TabsContent value="security">
           <Card>
@@ -220,7 +223,7 @@ const SettingsSection = () => {
             <CardContent className="space-y-6">
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <h3 className="text-lg font-medium">Change Password</h3>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="current-password">Current Password</Label>
                   <Input
@@ -231,7 +234,7 @@ const SettingsSection = () => {
                     placeholder="Enter your current password"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="new-password">New Password</Label>
                   <Input
@@ -242,7 +245,7 @@ const SettingsSection = () => {
                     placeholder="Enter your new password"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm New Password</Label>
                   <Input
@@ -253,7 +256,7 @@ const SettingsSection = () => {
                     placeholder="Confirm your new password"
                   />
                 </div>
-                
+
                 <Button type="submit" disabled={isChangingPassword}>
                   {isChangingPassword ? (
                     <>
@@ -265,10 +268,10 @@ const SettingsSection = () => {
                   )}
                 </Button>
               </form>
-              
+
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Two-Factor Authentication</h3>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="two-factor">Enable Two-Factor Authentication</Label>
@@ -284,7 +287,7 @@ const SettingsSection = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Account Settings */}
         <TabsContent value="account">
           <Card>
@@ -297,12 +300,12 @@ const SettingsSection = () => {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Account Information</h3>
-                
+
                 <div className="space-y-2">
                   <Label>Email Address</Label>
                   <p className="text-sm font-medium">{user?.email}</p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Account Created</Label>
                   <p className="text-sm font-medium">
@@ -310,10 +313,10 @@ const SettingsSection = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-red-600">Danger Zone</h3>
-                
+
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive">
@@ -362,7 +365,7 @@ const SettingsSection = () => {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                
+
                 <p className="text-sm text-muted-foreground">
                   Once you delete your account, there is no going back. Please be certain.
                 </p>
