@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -66,26 +66,56 @@ const FeedbackSection = () => {
 
       if (feedbackError) throw feedbackError;
 
-      // Fetch replies for each feedback item
-      const feedbackWithReplies = await Promise.all(
-        feedbackData.map(async (feedback) => {
-          const { data: repliesData, error: repliesError } = await supabase
-            .from('feedback_replies')
-            .select('*, profile:profiles(full_name, avatar_url)')
-            .eq('feedback_id', feedback.id)
-            .order('created_at', { ascending: true });
+      // Process each feedback item to include replies
+      const processedFeedback = [];
 
-          if (repliesError) throw repliesError;
+      for (const feedback of feedbackData) {
+        // Fetch replies for this feedback
+        const { data: repliesData, error: repliesError } = await supabase
+          .from('feedback_replies')
+          .select('*')
+          .eq('feedback_id', feedback.id)
+          .order('created_at', { ascending: true });
 
-          return {
-            ...feedback,
-            replies: repliesData || []
-          };
-        })
-      );
+        if (repliesError) throw repliesError;
 
-      setFeedbackItems(feedbackWithReplies);
-    } catch (error) {
+        // Process replies to include profile information
+        const processedReplies = [];
+
+        if (repliesData && repliesData.length > 0) {
+          for (const reply of repliesData) {
+            let profileInfo = { full_name: 'Admin', avatar_url: null };
+
+            // Only fetch profile if it's not an admin reply
+            if (!reply.is_admin && reply.user_id) {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('full_name, avatar_url')
+                .eq('id', reply.user_id)
+                .single();
+
+              if (profileData) {
+                profileInfo = profileData;
+              }
+            }
+
+            processedReplies.push({
+              ...reply,
+              profile: profileInfo
+            });
+          }
+        }
+
+        // Add this feedback with its replies to the result
+        processedFeedback.push({
+          ...feedback,
+          replies: processedReplies
+        });
+      }
+
+      setFeedbackItems(processedFeedback);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       console.error('Error fetching feedback:', error);
       toast({
         title: 'Error fetching feedback',
@@ -141,10 +171,11 @@ const FeedbackSection = () => {
         title: 'Feedback submitted',
         description: 'Thank you for your feedback! We appreciate your input.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       toast({
         title: 'Error submitting feedback',
-        description: error.message || 'An error occurred while submitting your feedback.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -157,7 +188,7 @@ const FeedbackSection = () => {
     if (!name) return 'U';
     return name
       .split(' ')
-      .map(n => n[0])
+      .map((n: string) => n[0])
       .join('')
       .toUpperCase();
   };
@@ -173,12 +204,7 @@ const FeedbackSection = () => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Share Your Feedback</CardTitle>
@@ -381,7 +407,7 @@ const FeedbackSection = () => {
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 };
 
