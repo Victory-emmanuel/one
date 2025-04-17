@@ -51,7 +51,7 @@ const Layout = ({ children }: LayoutProps) => {
       <main className="flex-grow pt-24">{children}</main>
       <Footer />
       <Toaster />
-      <DirectJotFormChat />
+      <DirectJotFormChat debug={false} />
     </div>
   );
 };

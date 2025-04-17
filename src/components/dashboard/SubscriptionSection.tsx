@@ -6,32 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, AlertCircle, CreditCard, CalendarDays, Clock, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-// Define types for subscription data
-type PricingPlan = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  duration: number;
-  features: string[] | { features: string[] } | string;
-  is_popular: boolean;
-};
-
-type Subscription = {
-  id: string;
-  user_id: string;
-  plan_id: string;
-  status: 'trial' | 'active' | 'inactive';
-  trial_end_date?: string;
-  current_period_start?: string;
-  current_period_end?: string;
-  created_at: string;
-  updated_at: string;
-  plan?: PricingPlan;
-};
+// Import types and services
+import { Subscription, PricingPlan } from '@/types/subscription';
+import { getUserSubscription, createTrialSubscription, calculateTrialDaysLeft, getAllPricingPlans } from '@/services/subscription.service';
 
 const SubscriptionSection = () => {
   const { user } = useAuth();
@@ -40,129 +19,54 @@ const SubscriptionSection = () => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSubscriptionData = async () => {
-      if (!user) return;
+  // Function to fetch subscription data
+  const fetchSubscriptionData = async () => {
+    if (!user) return;
 
-      try {
-        // Check if user has a subscription
-        const { data: subscriptionData, error: subscriptionError } = await supabase
-          .from('user_subscriptions')
-          .select('*, plan:pricing_plans(*)')
-          .eq('user_id', user.id)
-          .single();
+    try {
+      setLoading(true);
 
-        if (subscriptionError) {
-          if (subscriptionError.code === 'PGRST116') { // No subscription found
-            // Create a trial subscription for new users
-            // First, get the basic plan
-            const { data: basicPlan, error: planError } = await supabase
-              .from('pricing_plans')
-              .select('*')
-              .eq('name', 'Basic')
-              .single();
+      // Check if user has a subscription
+      const subscriptionData = await getUserSubscription(user.id);
 
-            if (planError) {
-              // If no Basic plan exists, create one
-              const { data: newPlan, error: createPlanError } = await supabase
-                .from('pricing_plans')
-                .insert({
-                  name: 'Basic',
-                  description: 'For individuals just getting started',
-                  price: 9.99,
-                  duration: 30,
-                  features: ['Basic Analytics', 'Email Support', 'Up to 5 Projects'],
-                  is_popular: false,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                })
-                .select()
-                .single();
+      if (!subscriptionData) {
+        // Create a trial subscription for new users
+        const newSubscription = await createTrialSubscription(user.id);
 
-              if (createPlanError) throw createPlanError;
+        if (newSubscription) {
+          setSubscription(newSubscription);
 
-              // Create trial subscription with the new plan
-              const trialEndDate = new Date();
-              trialEndDate.setDate(trialEndDate.getDate() + 14); // 14-day trial
-
-              const { data: newSubscription, error: createSubError } = await supabase
-                .from('user_subscriptions')
-                .insert({
-                  user_id: user.id,
-                  plan_id: newPlan.id,
-                  status: 'trial',
-                  trial_end_date: trialEndDate.toISOString(),
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                })
-                .select('*, plan:pricing_plans(*)')
-                .single();
-
-              if (createSubError) throw createSubError;
-
-              setSubscription(newSubscription);
-
-              // Calculate days left in trial
-              const today = new Date();
-              const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-              setTrialDaysLeft(daysLeft);
-              setTrialPercentLeft((daysLeft / 14) * 100);
-            } else {
-              // Create trial subscription with the existing Basic plan
-              const trialEndDate = new Date();
-              trialEndDate.setDate(trialEndDate.getDate() + 14); // 14-day trial
-
-              const { data: newSubscription, error: createSubError } = await supabase
-                .from('user_subscriptions')
-                .insert({
-                  user_id: user.id,
-                  plan_id: basicPlan.id,
-                  status: 'trial',
-                  trial_end_date: trialEndDate.toISOString(),
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                })
-                .select('*, plan:pricing_plans(*)')
-                .single();
-
-              if (createSubError) throw createSubError;
-
-              setSubscription(newSubscription);
-
-              // Calculate days left in trial
-              const today = new Date();
-              const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-              setTrialDaysLeft(daysLeft);
-              setTrialPercentLeft((daysLeft / 14) * 100);
-            }
-          } else {
-            throw subscriptionError;
-          }
-        } else {
-          // User has an existing subscription
-          setSubscription(subscriptionData);
-
-          // Calculate days left in trial if applicable
-          if (subscriptionData.status === 'trial' && subscriptionData.trial_end_date) {
-            const trialEndDate = new Date(subscriptionData.trial_end_date);
-            const today = new Date();
-            const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+          // Calculate days left in trial
+          if (newSubscription.trial_end_date) {
+            const { daysLeft, percentLeft } = calculateTrialDaysLeft(newSubscription.trial_end_date);
             setTrialDaysLeft(daysLeft);
-            setTrialPercentLeft((daysLeft / 14) * 100);
+            setTrialPercentLeft(percentLeft);
           }
         }
-      } catch (error) {
-        console.error('Error fetching subscription data:', error);
-        toast({
-          title: 'Error loading subscription',
-          description: 'Could not load your subscription details. Please try again later.',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+      } else {
+        // User has an existing subscription
+        setSubscription(subscriptionData);
 
+        // Calculate days left in trial if applicable
+        if (subscriptionData.status === 'trial' && subscriptionData.trial_end_date) {
+          const { daysLeft, percentLeft } = calculateTrialDaysLeft(subscriptionData.trial_end_date);
+          setTrialDaysLeft(daysLeft);
+          setTrialPercentLeft(percentLeft);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching subscription data:', error);
+      toast({
+        title: 'Error loading subscription',
+        description: 'Could not load your subscription details. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     // Initial fetch
     fetchSubscriptionData();
 
@@ -175,6 +79,7 @@ const SubscriptionSection = () => {
 
     // Clean up on unmount
     return () => clearInterval(intervalId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Get color based on days left

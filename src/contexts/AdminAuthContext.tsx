@@ -5,6 +5,9 @@ import { supabaseAdmin } from '@/integrations/supabase/adminClient';
 import { useAuth } from './AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { getAdminSessionKey } from '@/constants/auth';
+import { updateUserSubscription } from '@/services/subscription.service';
+import { createClient, deleteClient } from '@/services/user.service';
+import { SubscriptionStatus } from '@/types/subscription';
 
 type AdminAuthContextType = {
   isAdminLoaded: boolean;
@@ -15,7 +18,7 @@ type AdminAuthContextType = {
     updateUserById: (userId: string, userData: any) => Promise<any>;
     resetPasswordForUser: (userId: string, password: string) => Promise<any>;
     inviteUserByEmail: (email: string, options?: any) => Promise<any>;
-    updateUserSubscription: (userId: string, planName: string, status: string) => Promise<boolean>;
+    updateUserSubscription: (userId: string, planName: string, status: SubscriptionStatus) => Promise<boolean>;
   };
 };
 
@@ -77,45 +80,12 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Create a new user
     createUser: async (email: string, password: string, userData?: any) => {
-      try {
-        // Use the admin client with service role key
-        const { data, error } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: userData || {},
-        });
-
-        if (error) throw error;
-        return data;
-      } catch (error: any) {
-        console.error('Error creating user:', error);
-        toast({
-          title: 'Error creating user',
-          description: error.message || 'An error occurred while creating the user.',
-          variant: 'destructive',
-        });
-        return null;
-      }
+      return createClient(email, password, userData);
     },
 
     // Delete a user
     deleteUser: async (userId: string) => {
-      try {
-        // Use the admin client with service role key
-        const { data, error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-
-        if (error) throw error;
-        return data;
-      } catch (error: any) {
-        console.error('Error deleting user:', error);
-        toast({
-          title: 'Error deleting user',
-          description: error.message || 'An error occurred while deleting the user.',
-          variant: 'destructive',
-        });
-        return null;
-      }
+      return deleteClient(userId);
     },
 
     // Update a user by ID
@@ -178,83 +148,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     },
 
     // Update user subscription
-    updateUserSubscription: async (userId: string, planName: string, status: string) => {
-      try {
-        console.log(`Updating subscription for user ${userId} to plan ${planName} with status ${status}`);
-
-        // First, get the subscription data
-        const { data: subscriptionData, error: subError } = await supabaseAdmin
-          .from('user_subscriptions')
-          .select('id')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (subError) {
-          console.error('Error fetching subscription:', subError);
-          throw subError;
-        }
-
-        // Get the plan ID
-        const { data: planData, error: planError } = await supabaseAdmin
-          .from('pricing_plans')
-          .select('id')
-          .eq('name', planName)
-          .single();
-
-        if (planError) {
-          console.error('Error fetching plan:', planError);
-          throw planError;
-        }
-
-        if (!planData) {
-          throw new Error(`Plan ${planName} not found`);
-        }
-
-        // If subscription exists, update it
-        if (subscriptionData) {
-          console.log(`Updating existing subscription ${subscriptionData.id}`);
-          const { error: updateError } = await supabaseAdmin
-            .from('user_subscriptions')
-            .update({
-              plan_id: planData.id,
-              status: status,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', subscriptionData.id);
-
-          if (updateError) {
-            console.error('Error updating subscription:', updateError);
-            throw updateError;
-          }
-        } else {
-          // If no subscription exists, create one
-          console.log(`Creating new subscription for user ${userId}`);
-          const { error: createError } = await supabaseAdmin
-            .from('user_subscriptions')
-            .insert({
-              user_id: userId,
-              plan_id: planData.id,
-              status: status,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-
-          if (createError) {
-            console.error('Error creating subscription:', createError);
-            throw createError;
-          }
-        }
-
-        return true;
-      } catch (error: any) {
-        console.error('Error updating user subscription:', error);
-        toast({
-          title: 'Error updating subscription',
-          description: error.message || 'An error occurred while updating the subscription.',
-          variant: 'destructive',
-        });
-        return false;
-      }
+    updateUserSubscription: async (userId: string, planName: string, status: SubscriptionStatus) => {
+      return updateUserSubscription({ userId, planName, status });
     },
   };
 
