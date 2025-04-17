@@ -4,15 +4,23 @@
 const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client with service role key
-const supabaseUrl = 'https://fajtzqkkkaszbqemldel.supabase.co';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhanR6cWtra2FzemJxZW1sZGVsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDcxNTE2OCwiZXhwIjoyMDYwMjkxMTY4fQ.dBGWTOCpT8mqyxiizFib7a3FK6DEkq4eF4aLoMOtf2s';
+// Load environment variables from .env file
+require('dotenv').config();
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.VITE_SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('VITE_SUPABASE_URL and VITE_SUPABASE_SERVICE_KEY environment variables are required');
+  process.exit(1);
+}
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 async function updateAdminClaims(userId, email) {
   try {
     console.log(`Updating JWT claims for admin user ${email} (${userId})...`);
-    
+
     // Update user metadata
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.updateUserById(
       userId,
@@ -27,13 +35,13 @@ async function updateAdminClaims(userId, email) {
         }
       }
     );
-    
+
     if (userError) {
       throw userError;
     }
-    
+
     console.log('User metadata updated:', userData);
-    
+
     // Update profile in the profiles table
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
@@ -44,22 +52,27 @@ async function updateAdminClaims(userId, email) {
       })
       .eq('id', userId)
       .select();
-    
+
     if (profileError) {
       throw profileError;
     }
-    
+
     console.log('Profile updated:', profileData);
-    
+
     console.log(`Admin claims updated for user ${email}`);
   } catch (error) {
     console.error('Error updating admin claims:', error);
   }
 }
 
-// The admin user ID and email
-const adminUserId = '9b2d6b23-213e-44bf-9f30-b36164239fee';
-const adminEmail = 'marketinglot.blog@gmail.com';
+// The admin user ID and email from environment variables
+const adminUserId = process.env.VITE_ADMIN_USER_ID;
+const adminEmail = process.env.VITE_ADMIN_USER_EMAIL;
+
+if (!adminUserId || !adminEmail) {
+  console.error('VITE_ADMIN_USER_ID and VITE_ADMIN_USER_EMAIL environment variables are required');
+  process.exit(1);
+}
 
 updateAdminClaims(adminUserId, adminEmail)
   .then(() => {

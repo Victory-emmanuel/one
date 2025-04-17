@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminLoginPage = () => {
-  const [email, setEmail] = useState('marketinglot.blog@gmail.com');
+  const [email, setEmail] = useState(import.meta.env.VITE_ADMIN_USER_EMAIL as string);
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { refreshProfile } = useAuth();
@@ -30,7 +30,7 @@ const AdminLoginPage = () => {
       if (error) throw error;
 
       // Check if this is the admin user
-      if (data.user?.id === '9b2d6b23-213e-44bf-9f30-b36164239fee') {
+      if (data.user?.id === import.meta.env.VITE_ADMIN_USER_ID) {
         // Update user metadata only - this will update the JWT claims
         const { error: metadataError } = await supabase.auth.updateUser({
           data: {
@@ -109,7 +109,7 @@ const AdminLoginPage = () => {
                 disabled
               />
               <p className="text-xs text-muted-foreground">
-                This admin login is specifically for marketinglot.blog@gmail.com
+                This admin login is specifically for {import.meta.env.VITE_ADMIN_USER_EMAIL}
               </p>
             </div>
             <div className="space-y-2">

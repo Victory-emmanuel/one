@@ -26,8 +26,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdminLoaded, setIsAdminLoaded] = useState(false);
 
   // Check if this is the specific admin user we want to give special permissions to
-  const isSpecificAdmin = user?.id === '9b2d6b23-213e-44bf-9f30-b36164239fee' &&
-                         user?.email === 'marketinglot.blog@gmail.com';
+  const isSpecificAdmin = user?.id === import.meta.env.VITE_ADMIN_USER_ID &&
+                         user?.email === import.meta.env.VITE_ADMIN_USER_EMAIL;
 
   // Check if admin access has been granted for this session
   const [hasSessionAccess, setHasSessionAccess] = useState(false);

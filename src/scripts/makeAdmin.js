@@ -5,9 +5,17 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-// Replace with your Supabase URL and anon key
-const supabaseUrl = 'https://fajtzqkkkaszbqemldel.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhanR6cWtra2FzemJxZW1sZGVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODI0MzQ0NzIsImV4cCI6MTk5ODAxMDQ3Mn0.SZekMQQb7QO-0t9GtRUOVaSl_Wt3c_W-CKd6rIVIvIY';
+// Load environment variables from .env file
+require('dotenv').config();
+
+// Get Supabase URL and anon key from environment variables
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables are required');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -19,33 +27,33 @@ async function makeAdmin(email) {
       .select('id, email, is_admin')
       .eq('email', email)
       .limit(1);
-    
+
     if (userError) {
       throw userError;
     }
-    
+
     if (!users || users.length === 0) {
       console.error(`User with email ${email} not found`);
       return;
     }
-    
+
     const user = users[0];
-    
+
     if (user.is_admin) {
       console.log(`User ${email} is already an admin`);
       return;
     }
-    
+
     // Update the user to be an admin
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ is_admin: true })
       .eq('id', user.id);
-    
+
     if (updateError) {
       throw updateError;
     }
-    
+
     console.log(`User ${email} is now an admin`);
   } catch (error) {
     console.error('Error making user an admin:', error);

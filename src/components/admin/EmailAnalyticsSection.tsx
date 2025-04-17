@@ -18,9 +18,9 @@ const EmailAnalyticsSection = () => {
     campaigns: []
   });
 
-  // ConvertKit API keys from README.md
-  const convertKitApiKey = 'kit_c9aa47d07566ee1eccecdd2635edadc7'; // V4 API Key
-  const convertKitApiSecret = 'jUPLhcwhDM_IL3ZHtFTexXbdJauDd3x62MBCy0EPCG8';
+  // ConvertKit API keys from environment variables
+  const convertKitApiKey = import.meta.env.VITE_CONVERTKIT_V4_API_KEY;
+  const convertKitApiSecret = import.meta.env.VITE_CONVERTKIT_API_SECRET;
 
   useEffect(() => {
     const fetchConvertKitData = async () => {

@@ -12,8 +12,8 @@ const AdminAccessButton = () => {
   const [accessGranted, setAccessGranted] = useState(false);
 
   // Check if this is the specific admin user
-  const isSpecificAdmin = user?.id === '9b2d6b23-213e-44bf-9f30-b36164239fee' &&
-                         user?.email === 'marketinglot.blog@gmail.com';
+  const isSpecificAdmin = user?.id === import.meta.env.VITE_ADMIN_USER_ID &&
+                         user?.email === import.meta.env.VITE_ADMIN_USER_EMAIL;
 
   // Check if access has been granted in this session
   useEffect(() => {

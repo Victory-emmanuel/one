@@ -72,62 +72,44 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
 
-Important keys, snippets, and code:
+## Environment Variables
 
-Microsoft clarity:
+This project uses environment variables to store sensitive information like API keys and secrets. To set up your environment:
 
-<script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "r4fihm96c5");
-</script>
+1. Copy the `.env.example` file to a new file named `.env`:
+   ```sh
+   cp .env.example .env
+   ```
 
-VITE_MICROSOFT_CLARITY_PROJECT_ID=r4fihm96c5
+2. Update the values in the `.env` file with your own credentials if needed.
 
-ConvertKit
+3. Make sure the `.env` file is included in your `.gitignore` to prevent it from being committed to version control.
 
-NEWSLETTER 
-<script async data-uid="5808df4393" src="https://crafty-creator-5068.kit.com/5808df4393/index.js"></script>
+Here's what each environment variable is used for:
 
-POPUP
-<a data-formkit-toggle="3f895af78b" href="https://crafty-creator-5068.kit.com/3f895af78b">Your link text</a>
+### Supabase Configuration
+- `VITE_SUPABASE_URL`: Your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY`: The anonymous key for client-side operations
+- `VITE_SUPABASE_SERVICE_KEY`: The service role key for admin operations (keep this secure!)
 
-API KEYS
-VITE_V4_API_KEY=kit_c9aa47d07566ee1eccecdd2635edadc7
-VITE_V3_API_KEY=l8Jhf6c50JWtIABexoLU8Q
-VITE_API_SECRET=jUPLhcwhDM_IL3ZHtFTexXbdJauDd3x62MBCy0EPCG8
+### ConvertKit API Keys
+- `VITE_CONVERTKIT_V4_API_KEY`: ConvertKit V4 API key
+- `VITE_CONVERTKIT_V3_API_KEY`: ConvertKit V3 API key
+- `VITE_CONVERTKIT_API_SECRET`: ConvertKit API secret
 
-JOTFORM
+### ConvertKit Form IDs
+- `VITE_CONVERTKIT_NEWSLETTER_FORM_ID`: ID for the newsletter form
+- `VITE_CONVERTKIT_POPUP_FORM_ID`: ID for the popup form
 
-CHATBOT
-<script src='https://cdn.jotfor.ms/s/umd/latest/for-embedded-agent.js'></script>
-<script>
-  window.addEventListener("DOMContentLoaded", function() {
-    window.AgentInitializer.init({
-      agentRenderURL: "https://agent.jotform.com/01960593248a7d43a80dbeba645716245d9a",
-      rootId: "JotformAgent-01960593248a7d43a80dbeba645716245d9a",
-      formID: "01960593248a7d43a80dbeba645716245d9a",
-      queryParams: ["skipWelcome=1", "maximizable=1"],
-      domain: "https://www.jotform.com",
-      isDraggable: false,
-      background: "linear-gradient(180deg, #0066ff 0%, #ff6b35 100%)",
-      buttonBackgroundColor: "#8797FF",
-      buttonIconColor: "#01091B",
-      variant: false,
-      customizations: {
-        "greeting": "Yes",
-        "greetingMessage": "Hi! How can I assist you?",
-        "openByDefault": "No",
-        "pulse": "Yes",
-        "position": "right",
-        "autoOpenChatIn": "0"
-      },
-      isVoice: false,
-    });
-  });
-</script>
+### Microsoft Clarity
+- `VITE_MICROSOFT_CLARITY_PROJECT_ID`: Microsoft Clarity tracking ID
+
+### JotForm
+- `VITE_JOTFORM_AGENT_ID`: JotForm agent ID for the chat widget
+
+### Admin User
+- `VITE_ADMIN_USER_ID`: Admin user ID (for development purposes only)
+- `VITE_ADMIN_USER_EMAIL`: Admin user email (for development purposes only)
 
 STAND ALONE page embed
 <iframe id="JotFormIFrame-01960593248a7d43a80dbeba645716245d9a"
@@ -162,7 +144,7 @@ Medium RSS FEED:
     <generator>Medium</generator>
     <lastBuildDate>Tue, 15 Apr 2025 11:27:03 GMT</lastBuildDate>
     <atom:link href="https://medium.com/@marketinglot-blog/feed" rel="self" type="application/rss+xml"/>
-    
+
     <item>
       <title><![CDATA[What Is Affiliate Marketing and How to make money with it.]]></title>
       <link>https://marketinglot-blog.medium.com/what-is-affiliate-marketing-and-how-to-make-money-with-it-2b154c038ff3</link>
@@ -183,7 +165,7 @@ Medium RSS FEED:
         <p>Affiliate marketing is one way to ensure the money is coming in even while you’re away from your computer...</p>
       ]]></content:encoded>
     </item>
-    
+
     <item>
       <title><![CDATA[The Ultimate Guide to CPA Marketing: Step by Step on Getting Started…]]></title>
       <link>https://marketinglot-blog.medium.com/the-ultimate-guide-to-cpa-marketing-how-to-make-money-and-get-more-leads-4cd8790959a</link>
@@ -202,6 +184,6 @@ Medium RSS FEED:
         <p>How to make money with CPA Marketing? If you’re wondering how to become successful at CPA marketing, you’ve come to the right place...</p>
       ]]></content:encoded>
     </item>
-    
+
   </channel>
 </rss>

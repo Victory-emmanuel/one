@@ -3,9 +3,12 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 // Initialize Supabase client
-const supabaseUrl = 'https://fajtzqkkkaszbqemldel.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY; // Use service key for admin operations
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY; // Use service key for admin operations
 
 if (!supabaseKey) {
   console.error('SUPABASE_SERVICE_KEY environment variable is required');
@@ -17,7 +20,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 async function ensureAdmin(userId, email) {
   try {
     console.log(`Ensuring user ${email} (${userId}) is an admin...`);
-    
+
     // Update the profiles table
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
@@ -28,13 +31,13 @@ async function ensureAdmin(userId, email) {
       })
       .eq('id', userId)
       .select();
-    
+
     if (profileError) {
       throw profileError;
     }
-    
+
     console.log('Profile updated:', profileData);
-    
+
     // Update the user metadata in auth.users
     const { data: userData, error: userError } = await supabase.auth.admin.updateUserById(
       userId,
@@ -45,22 +48,27 @@ async function ensureAdmin(userId, email) {
         }
       }
     );
-    
+
     if (userError) {
       throw userError;
     }
-    
+
     console.log('User metadata updated:', userData);
-    
+
     console.log(`User ${email} is now an admin`);
   } catch (error) {
     console.error('Error ensuring admin status:', error);
   }
 }
 
-// The user ID and email to make an admin
-const userId = '9b2d6b23-213e-44bf-9f30-b36164239fee';
-const email = 'marketinglot.blog@gmail.com';
+// The user ID and email to make an admin from environment variables
+const userId = process.env.VITE_ADMIN_USER_ID;
+const email = process.env.VITE_ADMIN_USER_EMAIL;
+
+if (!userId || !email) {
+  console.error('VITE_ADMIN_USER_ID and VITE_ADMIN_USER_EMAIL environment variables are required');
+  process.exit(1);
+}
 
 ensureAdmin(userId, email)
   .then(() => {

@@ -19,9 +19,9 @@ const Layout = ({ children }: LayoutProps) => {
     script.onload = () => {
       if (window.AgentInitializer) {
         window.AgentInitializer.init({
-          agentRenderURL: "https://agent.jotform.com/01960593248a7d43a80dbeba645716245d9a",
-          rootId: "JotformAgent-01960593248a7d43a80dbeba645716245d9a",
-          formID: "01960593248a7d43a80dbeba645716245d9a",
+          agentRenderURL: `https://agent.jotform.com/${import.meta.env.VITE_JOTFORM_AGENT_ID}`,
+          rootId: `JotformAgent-${import.meta.env.VITE_JOTFORM_AGENT_ID}`,
+          formID: import.meta.env.VITE_JOTFORM_AGENT_ID,
           queryParams: ["skipWelcome=1", "maximizable=1"],
           domain: "https://www.jotform.com",
           isDraggable: false,
@@ -44,15 +44,24 @@ const Layout = ({ children }: LayoutProps) => {
 
     // Initialize ConvertKit Newsletter Form
     const convertKitScript = document.createElement('script');
-    convertKitScript.src = 'https://crafty-creator-5068.kit.com/5808df4393/index.js';
+    const formId = import.meta.env.VITE_CONVERTKIT_NEWSLETTER_FORM_ID;
+    convertKitScript.src = `https://crafty-creator-5068.kit.com/${formId}/index.js`;
     convertKitScript.async = true;
-    convertKitScript.setAttribute('data-uid', '5808df4393');
-    
+    convertKitScript.setAttribute('data-uid', formId);
+
     // Find the element where we want to add the ConvertKit form
     const newsletterFormContainer = document.getElementById('convertkit-newsletter-form');
     if (newsletterFormContainer) {
       newsletterFormContainer.appendChild(convertKitScript);
     }
+
+    // Initialize ConvertKit Popup Form
+    const popupFormId = import.meta.env.VITE_CONVERTKIT_POPUP_FORM_ID;
+    const popupScript = document.createElement('script');
+    popupScript.src = `https://crafty-creator-5068.kit.com/${popupFormId}/index.js`;
+    popupScript.async = true;
+    popupScript.setAttribute('data-uid', popupFormId);
+    document.body.appendChild(popupScript);
 
     return () => {
       // Clean up the scripts when component unmounts
@@ -61,6 +70,9 @@ const Layout = ({ children }: LayoutProps) => {
       }
       if (convertKitScript.parentNode) {
         convertKitScript.parentNode.removeChild(convertKitScript);
+      }
+      if (popupScript.parentNode) {
+        popupScript.parentNode.removeChild(popupScript);
       }
     };
   }, []);
