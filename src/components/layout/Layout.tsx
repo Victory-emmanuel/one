@@ -3,44 +3,14 @@ import { useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { Toaster } from '@/components/ui/toaster';
+import DirectJotFormChat from '@/components/chat/DirectJotFormChat';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  // Initialize JotForm Chat
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jotfor.ms/s/umd/latest/for-embedded-agent.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      if (window.AgentInitializer) {
-        window.AgentInitializer.init({
-          agentRenderURL: `https://agent.jotform.com/${import.meta.env.VITE_JOTFORM_AGENT_ID}`,
-          rootId: `JotformAgent-${import.meta.env.VITE_JOTFORM_AGENT_ID}`,
-          formID: import.meta.env.VITE_JOTFORM_AGENT_ID,
-          queryParams: ["skipWelcome=1", "maximizable=1"],
-          domain: "https://www.jotform.com",
-          isDraggable: false,
-          background: "linear-gradient(180deg, #0066ff 0%, #ff6b35 100%)",
-          buttonBackgroundColor: "#8797FF",
-          buttonIconColor: "#01091B",
-          variant: false,
-          customizations: {
-            "greeting": "Yes",
-            "greetingMessage": "Hi! How can I assist you?",
-            "openByDefault": "No",
-            "pulse": "Yes",
-            "position": "right",
-            "autoOpenChatIn": "0"
-          },
-          isVoice: false,
-        });
-      }
-    };
 
     // Initialize ConvertKit Newsletter Form
     const convertKitScript = document.createElement('script');
@@ -65,9 +35,7 @@ const Layout = ({ children }: LayoutProps) => {
 
     return () => {
       // Clean up the scripts when component unmounts
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
+      // No JotForm cleanup needed here as it's handled by the JotFormChat component
       if (convertKitScript.parentNode) {
         convertKitScript.parentNode.removeChild(convertKitScript);
       }
@@ -83,6 +51,7 @@ const Layout = ({ children }: LayoutProps) => {
       <main className="flex-grow pt-24">{children}</main>
       <Footer />
       <Toaster />
+      <DirectJotFormChat />
     </div>
   );
 };
