@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { fileToDataUrl } from '@/utils/fileToDataUrl';
+// import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -257,30 +258,35 @@ const SupportSection = () => {
     setIsSubmitting(true);
 
     try {
-      // Upload attachments if any
+      // Convert attachments to data URLs
       let attachmentData = [];
 
       if (attachments.length > 0) {
-        for (const file of attachments) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${user?.id}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-          const filePath = `support-attachments/${fileName}`;
+        try {
+          // Process each attachment
+          for (const file of attachments) {
+            // Check file size (limit to 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+              toast({
+                title: 'File too large',
+                description: `File ${file.name} is too large. Maximum size is 5MB.`,
+                variant: 'destructive',
+              });
+              continue;
+            }
 
-          const { error: uploadError, data } = await supabase.storage
-            .from('support-attachments')
-            .upload(filePath, file);
+            // Convert file to data URL
+            const dataUrl = await fileToDataUrl(file);
 
-          if (uploadError) throw uploadError;
-
-          const { data: urlData } = supabase.storage
-            .from('support-attachments')
-            .getPublicUrl(filePath);
-
-          attachmentData.push({
-            name: file.name,
-            url: urlData.publicUrl,
-            type: file.type
-          });
+            attachmentData.push({
+              name: file.name,
+              url: dataUrl,
+              type: file.type
+            });
+          }
+        } catch (error) {
+          console.error('Error processing attachments:', error);
+          throw new Error('Failed to process attachments. Please try again.');
         }
       }
 
@@ -314,10 +320,11 @@ const SupportSection = () => {
         title: 'Support ticket submitted',
         description: 'We\'ve received your request and will get back to you soon.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while submitting your support ticket.';
       toast({
         title: 'Error submitting ticket',
-        description: error.message || 'An error occurred while submitting your support ticket.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -330,7 +337,7 @@ const SupportSection = () => {
     if (!name) return 'U';
     return name
       .split(' ')
-      .map(n => n[0])
+      .map((n: string) => n[0])
       .join('')
       .toUpperCase();
   };
@@ -378,12 +385,7 @@ const SupportSection = () => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Support Ticket</CardTitle>
@@ -605,7 +607,7 @@ const SupportSection = () => {
           </Button>
         </CardFooter>
       </Card>
-    </motion.div>
+    </div>
   );
 };
 
