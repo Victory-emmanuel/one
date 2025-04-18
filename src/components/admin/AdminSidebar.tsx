@@ -10,7 +10,8 @@ import {
   LogOut,
   ChevronLeft,
   Mail,
-  UserCog
+  UserCog,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -66,6 +67,11 @@ const AdminSidebar = ({ open, setOpen }: AdminSidebarProps) => {
       name: 'Revenue',
       icon: <DollarSign className="h-5 w-5" />,
       path: '/admin/revenue'
+    },
+    {
+      name: 'Blog Manager',
+      icon: <FileText className="h-5 w-5" />,
+      path: '/admin/blog-manager'
     },
     {
       name: 'Complaints',

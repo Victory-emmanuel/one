@@ -8,6 +8,7 @@ import { getAdminSessionKey } from '@/constants/auth';
 import { updateUserSubscription } from '@/services/subscription.service';
 import { createClient, deleteClient } from '@/services/user.service';
 import { SubscriptionStatus } from '@/types/subscription';
+import { ensureAdminRole } from '@/utils/adminAuth';
 
 type AdminAuthContextType = {
   isAdminLoaded: boolean;
@@ -49,9 +50,16 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Initialize admin functions if the user is an admin or the specific admin user with session access
     if (user && (isAdmin || (isSpecificAdmin && hasSessionAccess))) {
-      setIsAdminLoaded(true);
-      console.log('Admin functions loaded for user:', user.email,
-                 isAdmin ? '(is admin)' : '(has session access)');
+      // Ensure admin role is set in JWT claims
+      ensureAdminRole().then(success => {
+        setIsAdminLoaded(true);
+        console.log('Admin functions loaded for user:', user.email,
+                   isAdmin ? '(is admin)' : '(has session access)',
+                   'JWT updated:', success);
+      }).catch(error => {
+        console.error('Error ensuring admin role:', error);
+        setIsAdminLoaded(false);
+      });
     } else {
       setIsAdminLoaded(false);
     }

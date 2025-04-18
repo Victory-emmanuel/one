@@ -3,76 +3,13 @@ import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, X, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from '@/integrations/supabase/client';
+import { BlogPost, BLOG_TAGS } from '@/types/blog';
 
-// Mock blog posts data (in a real app, this would come from an API or RSS feed)
-const allPosts = [
-  {
-    id: '2b154c038ff3',
-    title: 'What Is Affiliate Marketing and How to Make Money with It',
-    description: 'Affiliate marketing is one way to ensure the money is coming in even while you\'re away from your computer...',
-    link: 'https://marketinglot-blog.medium.com/what-is-affiliate-marketing-and-how-to-make-money-with-it-2b154c038ff3',
-    image: 'https://cdn-images-1.medium.com/max/1024/1*pvKwTqQLSqjeYq9ECXDVmg.png',
-    date: 'June 23, 2022',
-    author: 'Marketing Lot',
-    categories: ['affiliate-marketing', 'digital-marketing', 'email-marketing-lists'],
-  },
-  {
-    id: '4cd8790959a',
-    title: 'The Ultimate Guide to CPA Marketing: Step by Step on Getting Started',
-    description: 'How to make money with CPA Marketing? If you\'re wondering how to become successful at CPA marketing, you\'ve come to the right place...',
-    link: 'https://marketinglot-blog.medium.com/the-ultimate-guide-to-cpa-marketing-how-to-make-money-and-get-more-leads-4cd8790959a',
-    image: 'https://cdn-images-1.medium.com/max/1024/0*a1s7e3HL1IQmWgSX',
-    date: 'June 11, 2022',
-    author: 'Marketing Lot',
-    categories: ['cpa-marketing', 'marketing', 'marketing-tips'],
-  },
-  // Additional mock posts to fill out the blog grid
-  {
-    id: 'mock3',
-    title: '10 Essential Digital Marketing Strategies for 2025',
-    description: 'Stay ahead of the competition with these cutting-edge digital marketing strategies that will dominate in 2025...',
-    link: 'https://marketinglot-blog.medium.com/',
-    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80',
-    date: 'April 15, 2025',
-    author: 'Marketing Lot',
-    categories: ['digital-marketing', 'marketing-strategy', 'future-trends'],
-  },
-  {
-    id: 'mock4',
-    title: 'How to Build a Successful Social Media Marketing Strategy',
-    description: 'Learn how to create a social media marketing strategy that boosts engagement, drives traffic, and increases conversions...',
-    link: 'https://marketinglot-blog.medium.com/',
-    image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&q=80',
-    date: 'April 10, 2025',
-    author: 'Marketing Lot',
-    categories: ['social-media', 'marketing-strategy', 'engagement'],
-  },
-  {
-    id: 'mock5',
-    title: 'Email Marketing Best Practices That Drive Results',
-    description: 'Discover the proven email marketing techniques that will help you improve open rates, click-through rates, and conversions...',
-    link: 'https://marketinglot-blog.medium.com/',
-    image: 'https://images.unsplash.com/photo-1596526131083-e8c633c948d2?auto=format&fit=crop&q=80',
-    date: 'April 5, 2025',
-    author: 'Marketing Lot',
-    categories: ['email-marketing', 'conversions', 'marketing-automation'],
-  },
-  {
-    id: 'mock6',
-    title: 'Content Marketing ROI: How to Measure and Maximize Your Results',
-    description: 'Learn how to track and improve the ROI of your content marketing efforts with these proven strategies and metrics...',
-    link: 'https://marketinglot-blog.medium.com/',
-    image: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&q=80',
-    date: 'March 30, 2025',
-    author: 'Marketing Lot',
-    categories: ['content-marketing', 'roi', 'analytics'],
-  }
-];
 
-// Extract unique categories from all posts
-const allCategories = [...new Set(allPosts.flatMap(post => post.categories))];
-
+// Animation variants
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -90,94 +27,169 @@ const item = {
 
 const BlogGrid = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [filteredPosts, setFilteredPosts] = useState(allPosts);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [key, setKey] = useState(0); // Add a key to force re-render of the grid
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter posts when search term or category changes
+  // Fetch blog posts from Supabase
   useEffect(() => {
-    const filtered = allPosts.filter(post => {
-      const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            post.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === '' || post.categories.includes(selectedCategory);
-      return matchesSearch && matchesCategory;
-    });
-    setFilteredPosts(filtered);
-  }, [searchTerm, selectedCategory]);
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        // For public users, we only want to show published posts
+        // The RLS policy will handle this, but we'll add the filter here as well for clarity
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .eq('status', 'published')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setPosts(data || []);
+      } catch (error: any) {
+        console.error('Error fetching blog posts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  // Filter posts based on search term and selected tag
+  const filteredPosts = posts.filter(post => {
+    const matchesSearch = searchTerm === '' ||
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesTag = selectedTag === null || post.tag === selectedTag;
+
+    return matchesSearch && matchesTag;
+  });
+
+  // Clear search and force a re-render of the grid
+  const clearSearch = () => {
+    setSearchTerm('');
+    // Increment key to force a complete re-render of the grid
+    setKey(prevKey => prevKey + 1);
+  };
+
+  // Handle tag selection
+  const handleTagClick = (tag: string) => {
+    setSelectedTag(selectedTag === tag ? null : tag);
+    setKey(prevKey => prevKey + 1);
+  };
+
+  // Reset all filters
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSelectedTag(null);
+    setKey(prevKey => prevKey + 1);
+  };
 
   return (
     <section className="py-20 bg-gray-50">
       <div className="container-custom">
         <div className="mb-12">
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h2 className="text-xl font-semibold">Blog Articles</h2>
             <div className="relative w-full md:w-96">
-              <input 
-                type="text" 
-                placeholder="Search articles..." 
+              <input
+                type="text"
+                placeholder="Search by title..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  // If the search field is cleared manually, also reset the grid
+                  if (e.target.value === '') {
+                    setKey(prevKey => prevKey + 1);
+                  }
+                }}
+                onKeyDown={(e) => e.key === 'Escape' && clearSearch()}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-marketing-blue"
+                aria-label="Search articles by title"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            </div>
-            
-            <div className="w-full md:w-auto">
-              <select 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-marketing-blue"
-              >
-                <option value="">All Categories</option>
-                {allCategories.map(category => (
-                  <option key={category} value={category}>{category.replace(/-/g, ' ')}</option>
-                ))}
-              </select>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
+
+          {/* Tag filters */}
+          <div className="mt-6 flex flex-wrap gap-2">
+            {BLOG_TAGS.map((tag) => (
+              <Badge
+                key={tag}
+                variant={selectedTag === tag ? "default" : "outline"}
+                className={`cursor-pointer ${
+                  selectedTag === tag
+                    ? "bg-marketing-blue hover:bg-marketing-blue/90"
+                    : "hover:bg-gray-100"
+                }`}
+                onClick={() => handleTagClick(tag)}
+              >
+                {tag}
+              </Badge>
+            ))}
+            {(selectedTag || searchTerm) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="text-sm"
+              >
+                Reset Filters
+              </Button>
+            )}
+          </div>
         </div>
-        
-        {filteredPosts.length > 0 ? (
-          <motion.div 
+
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-marketing-blue" />
+          </div>
+        ) : filteredPosts.length > 0 ? (
+          <motion.div
+            key={key} // Add key to force complete re-render when search is cleared
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             variants={container}
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true }}
+            viewport={{ once: false }} // Change to false to allow re-animation
           >
             {filteredPosts.map((post) => (
               <motion.div key={post.id} variants={item}>
                 <Card className="card-hover overflow-hidden border-none shadow-md h-full flex flex-col">
                   <div className="h-48 overflow-hidden">
-                    <img 
-                      src={post.image} 
+                    <img
+                      src={post.image_url}
                       alt={post.title}
                       className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
                     />
                   </div>
                   <CardHeader>
                     <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                      <span>{post.date}</span>
-                      <span>{post.author}</span>
+                      <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                      <Badge variant="outline">{post.tag}</Badge>
                     </div>
                     <CardTitle className="line-clamp-2">{post.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="flex-grow">
                     <CardDescription className="text-gray-600 line-clamp-3 mb-4">
-                      {post.description}
+                      {post.excerpt}
                     </CardDescription>
-                    <div className="flex flex-wrap gap-2 mt-auto">
-                      {post.categories.map(category => (
-                        <span 
-                          key={category} 
-                          className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full cursor-pointer hover:bg-marketing-blue hover:text-white transition-colors"
-                          onClick={() => setSelectedCategory(category)}
-                        >
-                          {category.replace(/-/g, ' ')}
-                        </span>
-                      ))}
-                    </div>
                   </CardContent>
                   <CardFooter>
-                    <a href={post.link} target="_blank" rel="noopener noreferrer">
+                    <a href={post.medium_link} target="_blank" rel="noopener noreferrer">
                       <Button variant="link" className="text-marketing-blue p-0 hover:text-blue-700">
                         Read More
                       </Button>
