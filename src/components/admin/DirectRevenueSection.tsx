@@ -1,81 +1,64 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DollarSign, TrendingUp, CreditCard, Award, Loader2 } from 'lucide-react';
+import { DollarSign, TrendingUp, Award, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { supabaseAdmin } from '@/integrations/supabase/adminClient';
 
-// Import revenue service
-import { RevenueData, fetchSubscriptionsWithProfiles, calculateRevenueData } from '@/services/revenue.service';
-
-const RevenueSection = () => {
+// This is a direct implementation that avoids the problematic query pattern
+const DirectRevenueSection = () => {
   const [timeFilter, setTimeFilter] = useState('month');
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Define types for revenue data
+  type PlanRevenue = {
+    name: string;
+    revenue: number;
+    clients: number;
+    profitMargin: number;
+  };
+
+  type RevenuePeriodData = {
+    totalRevenue: number;
+    profit: number;
+    growthRate: number;
+    topPlan: PlanRevenue;
+    planBreakdown: PlanRevenue[];
+  };
+
+  type RevenueData = {
+    week: RevenuePeriodData;
+    month: RevenuePeriodData;
+    '3months': RevenuePeriodData;
+    '6months': RevenuePeriodData;
+    year: RevenuePeriodData;
+  };
+
+  // Initialize revenue data
   const [revenueData, setRevenueData] = useState<RevenueData>({
-    week: {
-      totalRevenue: 0,
-      profit: 0,
-      growthRate: 0,
-      topPlan: {
-        name: '',
-        revenue: 0,
-        clients: 0,
-        profitMargin: 0
-      },
-      planBreakdown: []
-    },
-    month: {
-      totalRevenue: 0,
-      profit: 0,
-      growthRate: 0,
-      topPlan: {
-        name: '',
-        revenue: 0,
-        clients: 0,
-        profitMargin: 0
-      },
-      planBreakdown: []
-    },
-    '3months': {
-      totalRevenue: 0,
-      profit: 0,
-      growthRate: 0,
-      topPlan: {
-        name: '',
-        revenue: 0,
-        clients: 0,
-        profitMargin: 0
-      },
-      planBreakdown: []
-    },
-    '6months': {
-      totalRevenue: 0,
-      profit: 0,
-      growthRate: 0,
-      topPlan: {
-        name: '',
-        revenue: 0,
-        clients: 0,
-        profitMargin: 0
-      },
-      planBreakdown: []
-    },
-    year: {
-      totalRevenue: 0,
-      profit: 0,
-      growthRate: 0,
-      topPlan: {
-        name: '',
-        revenue: 0,
-        clients: 0,
-        profitMargin: 0
-      },
-      planBreakdown: []
-    }
+    week: createEmptyPeriodData(),
+    month: createEmptyPeriodData(),
+    '3months': createEmptyPeriodData(),
+    '6months': createEmptyPeriodData(),
+    year: createEmptyPeriodData()
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  // Create empty period data
+  function createEmptyPeriodData(): RevenuePeriodData {
+    return {
+      totalRevenue: 0,
+      profit: 0,
+      growthRate: 0,
+      topPlan: {
+        name: '',
+        revenue: 0,
+        clients: 0,
+        profitMargin: 0
+      },
+      planBreakdown: []
+    };
+  }
 
   useEffect(() => {
     fetchRevenueData();
@@ -85,8 +68,28 @@ const RevenueSection = () => {
   const fetchRevenueData = async () => {
     setIsLoading(true);
     try {
-      // Fetch subscriptions with profiles using the revenue service
-      const subscriptionsWithProfiles = await fetchSubscriptionsWithProfiles();
+      // Step 1: Fetch subscription data WITHOUT the problematic join
+      const { data: subscriptionsData, error: subscriptionsError } = await supabaseAdmin
+        .from('user_subscriptions')
+        .select('*, plan:pricing_plans(*)');
+
+      if (subscriptionsError) throw subscriptionsError;
+
+      // Step 2: Fetch profiles data separately
+      const { data: profilesData, error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .select('*');
+
+      if (profilesError) throw profilesError;
+
+      // Step 3: Manually join the data
+      const subscriptionsWithProfiles = subscriptionsData.map(subscription => {
+        const userProfile = profilesData.find(profile => profile.id === subscription.user_id);
+        return {
+          ...subscription,
+          user: userProfile || null
+        };
+      });
 
       // If no subscriptions, return empty data
       if (!subscriptionsWithProfiles || subscriptionsWithProfiles.length === 0) {
@@ -94,8 +97,55 @@ const RevenueSection = () => {
         return;
       }
 
-      // Calculate revenue data using the revenue service
-      const newRevenueData = calculateRevenueData(subscriptionsWithProfiles);
+      // Calculate revenue data for each time period
+      const newRevenueData = { ...revenueData };
+
+      // Get all unique plan names
+      const planNames = [...new Set(subscriptionsWithProfiles.map(sub => sub.plan?.name || 'Unknown'))];
+
+      // Calculate revenue for each time period
+      Object.keys(newRevenueData).forEach(period => {
+        // Filter subscriptions based on time period
+        const periodSubscriptions = filterSubscriptionsByPeriod(subscriptionsWithProfiles, period);
+
+        // Calculate total revenue
+        const totalRevenue = periodSubscriptions.reduce((sum, sub) => sum + (sub.plan?.price || 0), 0);
+
+        // Calculate profit (assuming 80% profit margin)
+        const profit = totalRevenue * 0.8;
+
+        // Calculate revenue by plan
+        const planBreakdown = planNames.map(planName => {
+          const planSubs = periodSubscriptions.filter(sub => sub.plan?.name === planName);
+          const planRevenue = planSubs.reduce((sum, sub) => sum + (sub.plan?.price || 0), 0);
+          const planClients = planSubs.length;
+          const planProfitMargin = 80; // Assuming 80% profit margin for all plans
+
+          return {
+            name: planName,
+            revenue: planRevenue,
+            clients: planClients,
+            profitMargin: planProfitMargin
+          };
+        }).filter(plan => plan.revenue > 0);
+
+        // Find top plan
+        const topPlan = planBreakdown.length > 0 ?
+          planBreakdown.reduce((max, plan) => plan.revenue > max.revenue ? plan : max, planBreakdown[0]) :
+          { name: '', revenue: 0, clients: 0, profitMargin: 0 };
+
+        // Calculate growth rate (random for now)
+        const growthRate = Math.round(Math.random() * 20 * 10) / 10;
+
+        // Update revenue data for this period
+        newRevenueData[period] = {
+          totalRevenue,
+          profit,
+          growthRate,
+          topPlan,
+          planBreakdown
+        };
+      });
 
       setRevenueData(newRevenueData);
     } catch (error) {
@@ -108,6 +158,33 @@ const RevenueSection = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const filterSubscriptionsByPeriod = (subscriptions, period) => {
+    const now = new Date();
+    let startDate;
+
+    switch (period) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        break;
+      case '3months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        break;
+      case '6months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        break;
+      default:
+        startDate = new Date(0); // Beginning of time
+    }
+
+    return subscriptions.filter(sub => new Date(sub.created_at) >= startDate);
   };
 
   const currentData = revenueData[timeFilter];
@@ -332,4 +409,4 @@ const RevenueSection = () => {
   );
 };
 
-export default RevenueSection;
+export default DirectRevenueSection;

@@ -16,6 +16,7 @@ import { supabaseAdmin } from '@/integrations/supabase/adminClient';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { getAllClients } from '@/services/user.service';
 
 const ClientsSection = () => {
   const { adminFunctions, isAdminLoaded } = useAdminAuth();
@@ -63,70 +64,10 @@ const ClientsSection = () => {
   const fetchClients = async () => {
     setIsLoadingClients(true);
     try {
-      // Fetch all users using the AdminAuthContext
-      const userData = await adminFunctions.listUsers();
-
-      if (!userData || !userData.users) {
-        // If admin API fails, try to get users from profiles table instead
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('*');
-
-        if (profilesError) throw profilesError;
-
-        // Transform profiles data to match the expected format
-        const clientsData = profilesData.map(profile => {
-          return {
-            id: profile.id,
-            name: profile.full_name || 'Unknown',
-            email: profile.email || '',
-            plan: 'Basic', // Default plan
-            status: 'active', // Default status
-            signupDate: profile.created_at ? new Date(profile.created_at).toISOString().split('T')[0] : '',
-            avatar: profile.avatar_url || ''
-          };
-        });
-
-        setClients(clientsData);
-        console.log('Loaded clients from profiles:', clientsData.length);
-      } else {
-        // Get subscription data for each user using supabaseAdmin to bypass RLS
-        const { data: subscriptionsData, error: subscriptionsError } = await supabaseAdmin
-          .from('user_subscriptions')
-          .select('*, plan:pricing_plans(*)');
-
-        if (subscriptionsError) throw subscriptionsError;
-
-        // Get profiles data for each user
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('*');
-
-        if (profilesError) throw profilesError;
-
-        // Transform auth users data to match the expected format
-        const clientsData = userData.users.map(user => {
-          // Find subscription for this user
-          const subscription = subscriptionsData?.find(sub => sub.user_id === user.id);
-
-          // Find profile for this user
-          const profile = profilesData?.find(profile => profile.id === user.id);
-
-          return {
-            id: user.id,
-            name: profile?.full_name || user.user_metadata?.full_name || 'Unknown',
-            email: user.email,
-            plan: subscription?.plan?.name || 'Basic',
-            status: subscription?.status || 'inactive',
-            signupDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : '',
-            avatar: profile?.avatar_url || '',
-            user_metadata: user.user_metadata || {}
-          };
-        });
-
-        setClients(clientsData);
-        console.log('Loaded clients from auth users:', clientsData.length);
-      }
+      // Use the user service to fetch all clients
+      const clientsData = await getAllClients();
+      setClients(clientsData);
+      console.log('Loaded clients:', clientsData.length);
     } catch (error) {
       console.error('Error fetching clients:', error);
       toast({

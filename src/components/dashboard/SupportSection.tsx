@@ -15,38 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-interface SupportTicket {
-  id: string;
-  subject: string;
-  category: string;
-  message: string;
-  status: string;
-  created_at: string;
-  attachments: {
-    name: string;
-    url: string;
-    type: string;
-  }[] | null;
-  replies: TicketReply[];
-}
-
-interface TicketReply {
-  id: string;
-  ticket_id: string;
-  user_id: string;
-  is_admin: boolean;
-  reply_text: string;
-  created_at: string;
-  attachments: {
-    name: string;
-    url: string;
-    type: string;
-  }[] | null;
-  profile?: {
-    full_name: string;
-    avatar_url: string | null;
-  };
-}
+// Import support service and types
+import { SupportTicket, TicketReply, fetchUserSupportTickets, createSupportTicket } from '@/services/support.service';
 
 interface TicketCardProps {
   ticket: SupportTicket;
@@ -188,44 +158,16 @@ const SupportSection = () => {
   }, [user]);
 
   const fetchTickets = async () => {
+    if (!user?.id) return;
+
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
-
-      // Fetch tickets
-      const { data: ticketsData, error: ticketsError } = await supabase
-        .from('support_tickets')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      if (ticketsError) throw ticketsError;
-
-      // Fetch replies for each ticket
-      const ticketsWithReplies = await Promise.all(
-        ticketsData.map(async (ticket) => {
-          const { data: repliesData, error: repliesError } = await supabase
-            .from('support_ticket_replies')
-            .select('*, profile:profiles(full_name, avatar_url)')
-            .eq('ticket_id', ticket.id)
-            .order('created_at', { ascending: true });
-
-          if (repliesError) throw repliesError;
-
-          return {
-            ...ticket,
-            replies: repliesData || []
-          };
-        })
-      );
-
-      setTickets(ticketsWithReplies);
+      // Use the support service to fetch tickets
+      const ticketsData = await fetchUserSupportTickets(user.id);
+      setTickets(ticketsData);
     } catch (error) {
       console.error('Error fetching tickets:', error);
-      toast({
-        title: 'Error fetching tickets',
-        description: 'Could not load your support tickets.',
-        variant: 'destructive',
-      });
     } finally {
       setIsLoading(false);
     }
@@ -290,22 +232,17 @@ const SupportSection = () => {
         }
       }
 
-      // Create support ticket
-      const { data, error } = await supabase
-        .from('support_tickets')
-        .insert({
-          user_id: user?.id,
-          subject,
-          category,
-          message,
-          status: 'open',
-          attachments: attachmentData.length > 0 ? attachmentData : null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select();
+      // Create support ticket using the support service
+      const ticketData = {
+        subject,
+        category,
+        message,
+        attachments: attachmentData.length > 0 ? attachmentData : null
+      };
 
-      if (error) throw error;
+      const result = await createSupportTicket(user.id, ticketData);
+
+      if (!result) throw new Error('Failed to create support ticket');
 
       // Reset form
       setSubject('');

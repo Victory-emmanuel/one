@@ -1,5 +1,5 @@
 import AdminLayout from '@/components/admin/AdminLayout';
-import RevenueSection from '@/components/admin/RevenueSection';
+import DirectRevenueSection from '@/components/admin/DirectRevenueSection';
 
 const RevenuePage = () => {
   return (
@@ -11,8 +11,8 @@ const RevenuePage = () => {
             Track revenue, profits, and financial performance
           </p>
         </div>
-        
-        <RevenueSection />
+
+        <DirectRevenueSection />
       </div>
     </AdminLayout>
   );

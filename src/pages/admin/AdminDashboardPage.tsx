@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, CreditCard, DollarSign, BarChart3, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseAdmin } from '@/integrations/supabase/adminClient';
-import ReportsSection from '@/components/admin/ReportsSection';
+import SimplifiedReportsSection from '@/components/admin/SimplifiedReportsSection';
 import { toast } from '@/components/ui/use-toast';
 
 const AdminDashboardPage = () => {
@@ -293,7 +293,7 @@ const AdminDashboardPage = () => {
           </TabsList>
 
           <TabsContent value="reports" className="space-y-4">
-            <ReportsSection />
+            <SimplifiedReportsSection />
           </TabsContent>
 
           <TabsContent value="clients" className="space-y-4">

@@ -1,5 +1,5 @@
 import AdminLayout from '@/components/admin/AdminLayout';
-import EmailAnalyticsSection from '@/components/admin/EmailAnalyticsSection';
+import SimplifiedEmailAnalyticsSection from '@/components/admin/SimplifiedEmailAnalyticsSection';
 
 const EmailAnalyticsPage = () => {
   return (
@@ -11,8 +11,8 @@ const EmailAnalyticsPage = () => {
             Track your email marketing performance
           </p>
         </div>
-        
-        <EmailAnalyticsSection />
+
+        <SimplifiedEmailAnalyticsSection />
       </div>
     </AdminLayout>
   );
