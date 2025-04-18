@@ -6,6 +6,8 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, CreditCard, DollarSign, BarChart3, TrendingUp } from 'lucide-react';
+import ClientGrowthChart from '@/components/admin/charts/ClientGrowthChart';
+import RevenueTrendsChart from '@/components/admin/charts/RevenueTrendsChart';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseAdmin } from '@/integrations/supabase/adminClient';
 import SimplifiedReportsSection from '@/components/admin/SimplifiedReportsSection';
@@ -297,31 +299,11 @@ const AdminDashboardPage = () => {
           </TabsContent>
 
           <TabsContent value="clients" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Client Growth</CardTitle>
-                <CardDescription>
-                  Track client acquisition and growth over time
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px] flex items-center justify-center">
-                <p className="text-muted-foreground">Client growth chart will be displayed here</p>
-              </CardContent>
-            </Card>
+            <ClientGrowthChart />
           </TabsContent>
 
           <TabsContent value="revenue" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Revenue Trends</CardTitle>
-                <CardDescription>
-                  Track revenue performance over time
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px] flex items-center justify-center">
-                <p className="text-muted-foreground">Revenue chart will be displayed here</p>
-              </CardContent>
-            </Card>
+            <RevenueTrendsChart />
           </TabsContent>
         </Tabs>
       </div>

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DollarSign, TrendingUp, Award, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabaseAdmin } from '@/integrations/supabase/adminClient';
+import RevenueTrendsTab from '@/components/admin/charts/RevenueTrendsTab';
 
 // This is a direct implementation that avoids the problematic query pattern
 const DirectRevenueSection = () => {
@@ -395,12 +396,7 @@ const DirectRevenueSection = () => {
             </TabsContent>
 
             <TabsContent value="trends" className="space-y-4">
-              <div className="border rounded-lg p-6 bg-gray-50 text-center">
-                <h3 className="text-lg font-medium mb-2">Revenue Trends</h3>
-                <p className="text-muted-foreground mb-4">
-                  Revenue trend charts will be displayed here.
-                </p>
-              </div>
+              <RevenueTrendsTab timeFilter={timeFilter} />
             </TabsContent>
           </Tabs>
         </CardContent>
