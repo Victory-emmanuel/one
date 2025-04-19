@@ -68,7 +68,7 @@ const App = () => {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/admin-login" element={<AdminLoginPage />} />
-             
+              
 
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={<DashboardPage />} />

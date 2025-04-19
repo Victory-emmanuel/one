@@ -35,9 +35,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl mb-4">Marketing Lot</h3>
+            <h3 className="text-xl mb-4">NextGenDigi</h3>
             <p className="mb-4 text-white/80">
-              A full-service digital marketing agency helping businesses grow through innovative strategies and solutions.
+              A leading automation solutions provider helping businesses transform through AI-powered technologies.
             </p>
             <div className="flex space-x-4">
               <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-marketing-blue transition-colors">
@@ -72,12 +72,12 @@ const Footer = () => {
           <div>
             <h3 className="text-xl mb-4">Our Services</h3>
             <ul className="space-y-2">
-              <li><Link to="/services#seo" className="hover:text-marketing-blue transition-colors">SEO Optimization</Link></li>
-              <li><Link to="/services#social-media" className="hover:text-marketing-blue transition-colors">Social Media Management</Link></li>
-              <li><Link to="/services#ppc" className="hover:text-marketing-blue transition-colors">PPC Campaigns</Link></li>
-              <li><Link to="/services#content" className="hover:text-marketing-blue transition-colors">Content Marketing</Link></li>
-              <li><Link to="/services#email" className="hover:text-marketing-blue transition-colors">Email Marketing</Link></li>
-              <li><Link to="/services#analytics" className="hover:text-marketing-blue transition-colors">Analytics & Reporting</Link></li>
+              <li><Link to="/services#rpa" className="hover:text-marketing-blue transition-colors">RPA Automation</Link></li>
+              <li><Link to="/services#ai" className="hover:text-marketing-blue transition-colors">AI Solutions</Link></li>
+              <li><Link to="/services#workflow" className="hover:text-marketing-blue transition-colors">Workflow Automation</Link></li>
+              <li><Link to="/services#data" className="hover:text-marketing-blue transition-colors">Data Integration</Link></li>
+              <li><Link to="/services#chatbots" className="hover:text-marketing-blue transition-colors">Chatbots</Link></li>
+              <li><Link to="/services#analytics" className="hover:text-marketing-blue transition-colors">Process Analytics</Link></li>
             </ul>
           </div>
 
@@ -85,13 +85,13 @@ const Footer = () => {
           <div>
             <h3 className="text-xl mb-4">Contact Us</h3>
             <address className="not-italic">
-              <p className="mb-2">123 Marketing Street</p>
-              <p className="mb-2">New York, NY 10001</p>
+              <p className="mb-2">456 Automation Avenue</p>
+              <p className="mb-2">San Francisco, CA 94105</p>
               <p className="mb-2">United States</p>
               <p className="mb-2 flex items-center">
                 <Mail size={16} className="mr-2" /> 
-                <a href="mailto:info@marketinglot.com" className="hover:text-marketing-blue transition-colors">
-                  info@marketinglot.com
+                <a href="mailto:info@nextgendigi.com" className="hover:text-marketing-blue transition-colors">
+                  info@nextgendigi.com
                 </a>
               </p>
             </address>

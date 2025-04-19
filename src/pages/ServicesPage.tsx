@@ -6,6 +6,8 @@ import ServicesBanner from "@/components/services/ServicesBanner";
 import ServicesGrid from "@/components/services/ServicesGrid";
 import ServicesFaq from "@/components/services/ServicesFaq";
 import CtaSection from "@/components/home/CtaSection";
+import IndustrySolutionsSection from "@/components/services/IndustrySolutionsSection";
+import PerformanceSection from "@/components/services/PerformanceSection";
 
 const ServicesPage = () => {
   return (
@@ -17,7 +19,10 @@ const ServicesPage = () => {
       >
         <ServicesBanner />
         <ServicesGrid />
+        <IndustrySolutionsSection/>
+
         <ServiceDetail />
+        <PerformanceSection />
         <ServicesFaq />
         <CtaSection />
       </motion.div>

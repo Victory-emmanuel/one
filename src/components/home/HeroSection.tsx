@@ -9,10 +9,10 @@ const HeroSection = () => {
       <div className="container-custom grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="text-left animate-fade-in-left">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 dark:text-white">
-            Grow Your Business With <span className="text-marketing-blue dark:text-blue-400">Effective</span> Digital Marketing
+            Transform Your Business With <span className="text-marketing-blue dark:text-blue-400">AI-Powered</span> Automation
           </h1>
           <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-xl">
-            We help businesses <span className="highlight-text dark:text-blue-300">increase visibility</span>, drive more leads, and boost revenue through data-driven marketing strategies.
+            NextGenDigi helps businesses <span className="highlight-text dark:text-blue-300">streamline operations</span>, reduce costs, and enhance efficiency through intelligent automation solutions.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button asChild className="btn-primary text-lg">

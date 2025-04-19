@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "github.com/supabase-community/supabase-mcp": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--access-token",
+        "sbp_f2d9a3cbc2fcea6c949cda31c5289d1778f2b81d"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

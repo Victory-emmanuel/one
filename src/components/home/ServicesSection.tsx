@@ -6,39 +6,39 @@ import { Button } from '@/components/ui/button';
 
 const services = [
   {
-    id: 'seo',
-    title: 'SEO Optimization',
-    description: 'Improve your search engine rankings and drive organic traffic to your website.',
+    id: 'rpa',
+    title: 'RPA Automation',
+    description: 'Automate repetitive tasks with robotic process automation to boost efficiency.',
     icon: <Search className="h-10 w-10 text-marketing-blue" />,
   },
   {
-    id: 'analytics',
-    title: 'Analytics & Reporting',
-    description: 'Gain insights into your marketing performance with comprehensive analytics.',
+    id: 'ai',
+    title: 'AI Solutions',
+    description: 'Implement artificial intelligence to transform business processes.',
     icon: <BarChart3 className="h-10 w-10 text-marketing-blue" />,
   },
   {
-    id: 'social-media',
-    title: 'Social Media',
-    description: 'Engage your audience and build brand awareness through social media marketing.',
+    id: 'workflow',
+    title: 'Workflow Automation',
+    description: 'Streamline business processes with intelligent workflow automation.',
     icon: <Share2 className="h-10 w-10 text-marketing-blue" />,
   },
   {
-    id: 'email',
-    title: 'Email Marketing',
-    description: 'Nurture leads and drive conversions with targeted email campaigns.',
+    id: 'data',
+    title: 'Data Integration',
+    description: 'Connect disparate systems and automate data flows across your organization.',
     icon: <Mail className="h-10 w-10 text-marketing-blue" />,
   },
   {
-    id: 'content',
-    title: 'Content Marketing',
-    description: 'Create valuable content that attracts and retains your target audience.',
+    id: 'chatbots',
+    title: 'Chatbots',
+    description: 'Deploy AI-powered chatbots to enhance customer service and support.',
     icon: <Edit3 className="h-10 w-10 text-marketing-blue" />,
   },
   {
-    id: 'ppc',
-    title: 'PPC Campaigns',
-    description: 'Drive immediate traffic and conversions with paid advertising campaigns.',
+    id: 'analytics',
+    title: 'Process Analytics',
+    description: 'Gain insights into automation performance and identify optimization opportunities.',
     icon: <PieChart className="h-10 w-10 text-marketing-blue" />,
   },
 ];
@@ -48,9 +48,9 @@ const ServicesSection = () => {
     <section className="section-padding bg-gray-50 dark:bg-gray-900" id="services">
       <div className="container-custom">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Our Services</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Our Automation Solutions</h2>
           <p className="text-lg text-gray-700 dark:text-gray-300">
-            We offer a comprehensive range of digital marketing services to help your business grow and succeed online.
+            NextGenDigi provides cutting-edge automation services to transform your business operations.
           </p>
         </div>
 
