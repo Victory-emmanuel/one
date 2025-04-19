@@ -87,6 +87,9 @@
 
   body {
     @apply bg-background text-foreground font-poppins;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -98,7 +101,7 @@
   .btn-primary {
     @apply bg-marketing-blue text-white font-medium px-6 py-3 rounded-md hover:bg-blue-700 transition-colors duration-300;
   }
-  
+
   .btn-secondary {
     @apply bg-marketing-dark text-white font-medium px-6 py-3 rounded-md hover:bg-gray-800 transition-colors duration-300;
   }
@@ -106,13 +109,13 @@
   .btn-outline {
     @apply border-2 border-marketing-blue text-marketing-blue font-medium px-6 py-3 rounded-md hover:bg-marketing-blue hover:text-white transition-colors duration-300;
   }
-  
+
   .section-padding {
     @apply py-16 md:py-24;
   }
-  
+
   .container-custom {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-hidden w-full;
   }
 
   .highlight-text {

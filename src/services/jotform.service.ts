@@ -15,36 +15,36 @@ export interface JotFormInitOptions {
  */
 export const initJotFormChat = (options: JotFormInitOptions): (() => void) => {
   const { agentId, containerId = 'jotform-agent-container', debug = false } = options;
-  
+
   if (debug) {
     console.log('Initializing JotForm chat with options:', options);
   }
-  
+
   // Create a container for the JotForm chat widget if it doesn't exist
   let container = document.getElementById(containerId);
   if (!container) {
     container = document.createElement('div');
     container.id = containerId;
     document.body.appendChild(container);
-    
+
     if (debug) {
       console.log('Created JotForm container with ID:', containerId);
     }
   }
-  
+
   // Set the container ID to match JotForm's expected format
   const jotformContainerId = `JotformAgent-${agentId}`;
   container.id = jotformContainerId;
-  
+
   if (debug) {
     console.log('Set JotForm container ID to:', jotformContainerId);
   }
-  
+
   // Load the JotForm script
   const script = document.createElement('script');
   script.src = 'https://cdn.jotfor.ms/s/umd/latest/for-embedded-agent.js';
   script.async = true;
-  
+
   // Set a timeout to detect if the script fails to load
   const timeoutId = setTimeout(() => {
     if (debug) {
@@ -52,17 +52,17 @@ export const initJotFormChat = (options: JotFormInitOptions): (() => void) => {
     }
     createFallbackEmbed(agentId, container as HTMLElement, debug);
   }, 5000); // 5 seconds timeout
-  
+
   // Initialize JotForm when the script is loaded
   script.onload = () => {
     // Clear the timeout since the script loaded successfully
     clearTimeout(timeoutId);
-    
+
     if (window.AgentInitializer) {
       if (debug) {
         console.log('AgentInitializer found, initializing...');
       }
-      
+
       window.AgentInitializer.init({
         agentRenderURL: `https://agent.jotform.com/${agentId}`,
         rootId: jotformContainerId,
@@ -84,7 +84,7 @@ export const initJotFormChat = (options: JotFormInitOptions): (() => void) => {
         },
         isVoice: false,
       });
-      
+
       if (debug) {
         console.log('JotForm chat initialized successfully');
       }
@@ -95,7 +95,7 @@ export const initJotFormChat = (options: JotFormInitOptions): (() => void) => {
       createFallbackEmbed(agentId, container as HTMLElement, debug);
     }
   };
-  
+
   // Handle script load errors
   script.onerror = () => {
     if (debug) {
@@ -104,10 +104,10 @@ export const initJotFormChat = (options: JotFormInitOptions): (() => void) => {
     clearTimeout(timeoutId);
     createFallbackEmbed(agentId, container as HTMLElement, debug);
   };
-  
+
   // Add the script to the document
   document.body.appendChild(script);
-  
+
   // Add a resize handler to ensure the JotForm chat widget is properly positioned
   const handleResize = () => {
     // Force re-render of JotForm chat widget on window resize
@@ -120,10 +120,10 @@ export const initJotFormChat = (options: JotFormInitOptions): (() => void) => {
       }, 100);
     }
   };
-  
+
   // Add resize event listener
   window.addEventListener('resize', handleResize);
-  
+
   // Return a cleanup function
   return () => {
     clearTimeout(timeoutId);
@@ -145,14 +145,14 @@ export const initJotFormChat = (options: JotFormInitOptions): (() => void) => {
  */
 const createFallbackEmbed = (agentId: string, container: HTMLElement, debug: boolean = false): void => {
   if (!container) return;
-  
+
   if (debug) {
     console.log('Creating fallback JotForm embed');
   }
-  
+
   // Clear the container
   container.innerHTML = '';
-  
+
   // Create an iframe element
   const iframe = document.createElement('iframe');
   iframe.id = `JotFormIFrame-${agentId}`;
@@ -168,18 +168,18 @@ const createFallbackEmbed = (agentId: string, container: HTMLElement, debug: boo
   iframe.style.height = '70px';
   iframe.style.minWidth = '70px';
   iframe.style.minHeight = '70px';
-  iframe.style.maxWidth = '90vw';
-  iframe.style.maxHeight = '90vh';
+  iframe.style.maxWidth = '350px';
+  iframe.style.maxHeight = '500px';
   iframe.style.border = 'none';
   iframe.style.borderRadius = '50%';
   iframe.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
   iframe.style.zIndex = '9999';
   iframe.style.overflow = 'hidden';
   iframe.style.transition = 'all 0.3s ease';
-  
+
   // Add the iframe to the container
   container.appendChild(iframe);
-  
+
   // Create a script to handle the iframe
   const handlerScript = document.createElement('script');
   handlerScript.src = 'https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js';
@@ -189,15 +189,15 @@ const createFallbackEmbed = (agentId: string, container: HTMLElement, debug: boo
     if (window.jotformEmbedHandler) {
       // @ts-ignore
       window.jotformEmbedHandler(`iframe[id='JotFormIFrame-${agentId}']`, 'https://www.jotform.com');
-      
+
       if (debug) {
         console.log('JotForm iframe handler initialized');
       }
     }
   };
-  
+
   document.body.appendChild(handlerScript);
-  
+
   // Add click handler to expand the chat
   iframe.addEventListener('click', () => {
     if (iframe.style.width === '70px') {
@@ -210,7 +210,7 @@ const createFallbackEmbed = (agentId: string, container: HTMLElement, debug: boo
       iframe.style.borderRadius = '50%';
     }
   });
-  
+
   if (debug) {
     console.log('Fallback JotForm embed created');
   }

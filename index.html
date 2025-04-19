@@ -19,6 +19,17 @@
 
     <!-- Microsoft Clarity Tracking -->
     <script type="module" src="/clarity.js"></script>
+
+    <!-- Fix for overflow issues -->
+    <style>
+      html, body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
   </head>
 
   <body>
@@ -30,48 +41,6 @@
     <script type="module" src="/src/main.tsx"></script>
 
     <!-- JotForm Chat Widget will be dynamically created by the DirectJotFormChat component -->
-    <!-- Fallback JotForm implementation in case the React component fails -->
-    <div id="JotformAgent-01960593248a7d43a80dbeba645716245d9a"></div>
-    <script>
-      // This script will only run if the React component fails to initialize
-      window.addEventListener('load', function() {
-        // Check if JotForm has been initialized by the React component
-        setTimeout(function() {
-          // If the JotForm chat button is not visible, initialize it directly
-          if (!document.querySelector('.jfAgentButton')) {
-            console.log('Fallback: Initializing JotForm directly');
-            var script = document.createElement('script');
-            script.src = 'https://cdn.jotfor.ms/s/umd/latest/for-embedded-agent.js';
-            script.async = true;
-            script.onload = function() {
-              if (window.AgentInitializer) {
-                window.AgentInitializer.init({
-                  agentRenderURL: "https://agent.jotform.com/01960593248a7d43a80dbeba645716245d9a",
-                  rootId: "JotformAgent-01960593248a7d43a80dbeba645716245d9a",
-                  formID: "01960593248a7d43a80dbeba645716245d9a",
-                  queryParams: ["skipWelcome=1", "maximizable=1"],
-                  domain: "https://www.jotform.com",
-                  isDraggable: false,
-                  background: "linear-gradient(180deg, #0066ff 0%, #ff6b35 100%)",
-                  buttonBackgroundColor: "#8797FF",
-                  buttonIconColor: "#01091B",
-                  variant: false,
-                  customizations: {
-                    "greeting": "Yes",
-                    "greetingMessage": "Hi! How can I assist you?",
-                    "openByDefault": "No",
-                    "pulse": "Yes",
-                    "position": "right",
-                    "autoOpenChatIn": "0"
-                  },
-                  isVoice: false,
-                });
-              }
-            };
-            document.body.appendChild(script);
-          }
-        }, 3000); // Wait 3 seconds to check if the React component has initialized JotForm
-      });
-    </script>
+    <!-- We're removing the fallback implementation to avoid conflicts and overflow issues -->
   </body>
 </html>
