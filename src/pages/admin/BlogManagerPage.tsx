@@ -18,6 +18,7 @@ const BlogManagerPage = () => {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [adminAccessLoading, setAdminAccessLoading] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
+  const [activeTab, setActiveTab] = useState("posts");
 
   // Ensure admin role is set in JWT claims
   const ensureAdmin = async () => {
@@ -263,7 +264,7 @@ const BlogManagerPage = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="posts" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="posts">Blog Posts</TabsTrigger>
             <TabsTrigger value="create">Create New Post</TabsTrigger>
@@ -273,7 +274,10 @@ const BlogManagerPage = () => {
             <BlogManagerTable
               posts={posts}
               loading={loading}
-              onEdit={setEditingPost}
+              onEdit={(post) => {
+                setEditingPost(post);
+                setActiveTab("create");
+              }}
               onDelete={handleDeletePost}
             />
           </TabsContent>
@@ -287,7 +291,10 @@ const BlogManagerPage = () => {
               <BlogManagerForm
                 onSubmit={editingPost ? handleUpdatePost : handleCreatePost}
                 initialData={editingPost}
-                onCancel={() => setEditingPost(null)}
+                onCancel={() => {
+                  setEditingPost(null);
+                  setActiveTab("posts");
+                }}
               />
             </motion.div>
           </TabsContent>

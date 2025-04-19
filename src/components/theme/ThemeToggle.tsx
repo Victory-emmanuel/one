@@ -38,7 +38,7 @@ export function ThemeToggle({
       variant={variant}
       size={size}
       onClick={toggleTheme}
-      className={`${className} dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 dark:border-gray-700`}
+      className={`${className} dark:bg-gray-800 dark:text-gray-100 hover:bg-amber-100 dark:hover:bg-gray-700 dark:border-gray-700`}
       aria-label="Toggle theme"
     >
       <div className="relative w-6 h-6 overflow-hidden">
@@ -70,7 +70,7 @@ export function ThemeToggle({
           }}
           className="absolute inset-0 flex items-center justify-center"
         >
-          <Sun className="h-4 w-4 text-amber-500 dark:text-amber-300" />
+          <Sun className="h-4 w-4 text-amber-800 dark:text-amber-500" />
         </motion.div>
       </div>
     </Button>

@@ -257,18 +257,23 @@ const BlogManagerForm = ({ onSubmit, initialData, onCancel }: BlogManagerFormPro
               )}
             />
 
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end space-x-4 mt-8">
               {onCancel && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={onCancel}
                   disabled={isSubmitting}
+                  className="px-6"
                 >
-                  Cancel
+                  Back to Posts
                 </Button>
               )}
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-marketing-blue hover:bg-blue-700 px-6"
+              >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {initialData ? 'Update Post' : 'Create Post'}
               </Button>
