@@ -22,17 +22,17 @@ const AuthPage = () => {
   }, [location]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-marketing-white via-marketing-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-marketing-white via-marketing-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="border-none shadow-lg">
+        <Card className="border-none shadow-lg dark:bg-gray-800 dark:border-gray-700">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Welcome to Marketing Lot</CardTitle>
-            <CardDescription>Sign in to your account or create a new one</CardDescription>
+            <CardTitle className="text-2xl font-bold dark:text-white">Welcome to Marketing Lot</CardTitle>
+            <CardDescription className="dark:text-gray-300">Sign in to your account or create a new one</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

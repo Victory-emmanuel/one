@@ -14,9 +14,7 @@ export default {
 		container: {
 			center: true,
 			padding: '2rem',
-			screens: {
-				'2xl': '1400px'
-			}
+		
 		},
 		extend: {
 			colors: {
@@ -72,8 +70,9 @@ export default {
 				}
 			},
 			fontFamily: {
-				marcellus: ['Marcellus', 'serif'],
-				ptserif: ['PT Serif', 'serif']
+				poppins: ['Poppins', 'sans-serif'],
+				roboto: ['Roboto', 'sans-serif']
+				
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -134,8 +133,18 @@ export default {
 				'fade-in': 'fade-in 0.5s ease-out',
 				'fade-in-right': 'fade-in-right 0.5s ease-out',
 				'fade-in-left': 'fade-in-left 0.5s ease-out'
-			}
-		}
+			},
+			
+		},
+		screens: {
+			xx: "1px",
+			xs: "400px",
+			ss: "600px",
+			sm: "800px",
+			md: "1000px",
+			lg: "1200px",
+			xl: "1700px",
+		  },
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;

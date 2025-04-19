@@ -3,10 +3,10 @@ import { motion } from "framer-motion";
 
 const ContactMap = () => {
   return (
-    <section className="py-16">
-      <div className="container-custom">
+    <section className="py-12 sm:py-16">
+      <div className="container-custom px-4 sm:px-6">
         <motion.h2 
-          className="text-3xl font-bold mb-8 text-center"
+          className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center text-gray-900 dark:text-white"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -15,7 +15,7 @@ const ContactMap = () => {
         </motion.h2>
         
         <motion.div 
-          className="h-[400px] w-full bg-gray-200 rounded-lg overflow-hidden shadow-md"
+          className="h-[300px] sm:h-[350px] md:h-[400px] w-full bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden shadow-md"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}

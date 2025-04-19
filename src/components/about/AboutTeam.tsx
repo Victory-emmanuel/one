@@ -66,7 +66,7 @@ const item = {
 
 const AboutTeam = () => {
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-gray-50 dark:bg-gray-800">
       <div className="container-custom">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -75,8 +75,8 @@ const AboutTeam = () => {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Meet Our Team</h2>
-          <p className="text-lg text-gray-700">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Meet Our Team</h2>
+          <p className="text-lg text-gray-700 dark:text-gray-300">
             Our team of experts is dedicated to helping your business succeed in the digital landscape.
           </p>
         </motion.div>
@@ -90,7 +90,7 @@ const AboutTeam = () => {
         >
           {teamMembers.map((member, index) => (
             <motion.div key={index} variants={item}>
-              <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+              <div className="bg-white dark:bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
                 <div className="h-64 overflow-hidden">
                   <img 
                     src={member.image} 
@@ -99,17 +99,17 @@ const AboutTeam = () => {
                   />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-bold mb-1">{member.name}</h3>
-                  <p className="text-marketing-blue font-medium mb-3">{member.position}</p>
-                  <p className="text-gray-700 mb-4">{member.bio}</p>
+                  <h3 className="text-xl font-bold mb-1 dark:text-white">{member.name}</h3>
+                  <p className="text-marketing-blue dark:text-blue-400 font-medium mb-3">{member.position}</p>
+                  <p className="text-gray-700 dark:text-gray-300 mb-4">{member.bio}</p>
                   <div className="flex space-x-4">
-                    <a href={member.socials.linkedin} className="text-gray-600 hover:text-marketing-blue transition-colors">
+                    <a href={member.socials.linkedin} className="text-gray-600 dark:text-gray-400 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors">
                       <Linkedin size={20} />
                     </a>
-                    <a href={member.socials.twitter} className="text-gray-600 hover:text-marketing-blue transition-colors">
+                    <a href={member.socials.twitter} className="text-gray-600 dark:text-gray-400 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors">
                       <Twitter size={20} />
                     </a>
-                    <a href={`mailto:${member.socials.email}`} className="text-gray-600 hover:text-marketing-blue transition-colors">
+                    <a href={`mailto:${member.socials.email}`} className="text-gray-600 dark:text-gray-400 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors">
                       <Mail size={20} />
                     </a>
                   </div>

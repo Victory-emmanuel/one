@@ -47,7 +47,7 @@ const milestones = [
 
 const AboutTimeline = () => {
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-white dark:bg-gray-900">
       <div className="container-custom">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -56,15 +56,15 @@ const AboutTimeline = () => {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Journey</h2>
-          <p className="text-lg text-gray-700">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Our Journey</h2>
+          <p className="text-lg text-gray-700 dark:text-gray-300">
             The evolution of Marketing Lot from a small startup to a global digital marketing agency.
           </p>
         </motion.div>
         
         <div className="relative">
           {/* Vertical line */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-0.5 bg-marketing-blue/20 hidden md:block"></div>
+          <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-0.5 bg-marketing-blue/20 dark:bg-blue-500/20 hidden md:block"></div>
           
           <div className="space-y-12">
             {milestones.map((milestone, index) => (
@@ -77,20 +77,20 @@ const AboutTimeline = () => {
                 className={`flex flex-col md:flex-row ${index % 2 === 0 ? 'md:flex-row-reverse' : ''} items-center gap-8`}
               >
                 <div className="md:w-1/2 flex md:justify-end">
-                  <div className={`bg-white p-6 rounded-lg shadow-md border-l-4 ${index % 2 === 0 ? 'border-marketing-orange' : 'border-marketing-blue'} max-w-md`}>
+                  <div className={`bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md border-l-4 ${index % 2 === 0 ? 'border-marketing-orange dark:border-orange-500' : 'border-marketing-blue dark:border-blue-500'} max-w-md`}>
                     <div className="flex items-center mb-2">
-                      <div className={`text-xl font-bold text-white px-3 py-1 rounded mr-3 ${index % 2 === 0 ? 'bg-marketing-orange' : 'bg-marketing-blue'}`}>
+                      <div className={`text-xl font-bold text-white px-3 py-1 rounded mr-3 ${index % 2 === 0 ? 'bg-marketing-orange dark:bg-orange-500' : 'bg-marketing-blue dark:bg-blue-500'}`}>
                         {milestone.year}
                       </div>
-                      <h3 className="text-xl font-bold">{milestone.title}</h3>
+                      <h3 className="text-xl font-bold dark:text-white">{milestone.title}</h3>
                     </div>
-                    <p className="text-gray-700">{milestone.description}</p>
+                    <p className="text-gray-700 dark:text-gray-300">{milestone.description}</p>
                   </div>
                 </div>
                 
                 <div className="relative md:w-0">
-                  <div className="hidden md:block absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white border-2 border-marketing-blue z-10">
-                    <CheckCircle2 className="h-5 w-5 text-marketing-blue" />
+                  <div className="hidden md:block absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-700 border-2 border-marketing-blue dark:border-blue-500 z-10">
+                    <CheckCircle2 className="h-5 w-5 text-marketing-blue dark:text-blue-500" />
                   </div>
                 </div>
                 

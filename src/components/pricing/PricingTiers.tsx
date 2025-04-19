@@ -66,21 +66,21 @@ const PricingTiers = () => {
   ];
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-white dark:bg-gray-900">
       <div className="container-custom">
         <div className="max-w-3xl mx-auto text-center mb-12">
-          <div className="inline-flex items-center p-1 bg-gray-100 rounded-full mb-8">
+          <div className="inline-flex items-center p-1 bg-gray-100 dark:bg-gray-800 rounded-full mb-8">
             <button
               onClick={() => setIsAnnual(false)}
-              className={`py-2 px-4 rounded-full text-sm md:text-base transition-all ${!isAnnual ? 'bg-white shadow-md text-marketing-dark' : 'text-gray-600'}`}
+              className={`py-2 px-4 rounded-full text-sm md:text-base transition-all ${!isAnnual ? 'bg-white dark:bg-gray-700 shadow-md text-marketing-dark dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}
             >
               Monthly
             </button>
             <button
               onClick={() => setIsAnnual(true)}
-              className={`py-2 px-4 rounded-full text-sm md:text-base transition-all ${isAnnual ? 'bg-white shadow-md text-marketing-dark' : 'text-gray-600'}`}
+              className={`py-2 px-4 rounded-full text-sm md:text-base transition-all ${isAnnual ? 'bg-white dark:bg-gray-700 shadow-md text-marketing-dark dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}
             >
-              Annual <span className="text-marketing-orange font-semibold">Save 10%</span>
+              Annual <span className="text-marketing-orange dark:text-orange-400 font-semibold">Save 10%</span>
             </button>
           </div>
         </div>
@@ -97,7 +97,7 @@ const PricingTiers = () => {
               key={index}
               whileHover={{ y: -10 }}
               transition={{ duration: 0.3 }}
-              className={`bg-white rounded-xl shadow-lg p-8 border-2 ${plan.popular ? 'border-marketing-blue' : 'border-gray-100'} relative`}
+              className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border-2 ${plan.popular ? 'border-marketing-blue dark:border-blue-500' : 'border-gray-100 dark:border-gray-700'} relative`}
             >
               {plan.popular && (
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-marketing-blue text-white py-1 px-4 rounded-full text-sm font-semibold">
@@ -105,12 +105,12 @@ const PricingTiers = () => {
                 </div>
               )}
               
-              <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-              <p className="text-gray-600 mb-6 h-12">{plan.description}</p>
+              <h3 className="text-2xl font-bold mb-2 dark:text-white">{plan.name}</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6 h-12">{plan.description}</p>
               
               <div className="mb-6">
-                <span className="text-4xl font-bold">${isAnnual ? plan.annualPrice : plan.monthlyPrice}</span>
-                <span className="text-gray-600">/month</span>
+                <span className="text-4xl font-bold dark:text-white">${isAnnual ? plan.annualPrice : plan.monthlyPrice}</span>
+                <span className="text-gray-600 dark:text-gray-400">/month</span>
               </div>
               
               <ul className="space-y-3 mb-8">
@@ -121,7 +121,7 @@ const PricingTiers = () => {
                     ) : (
                       <X className="h-5 w-5 text-gray-300 mr-3 flex-shrink-0 mt-0.5" />
                     )}
-                    <span className={feature.included ? 'text-gray-700' : 'text-gray-400'}>
+                    <span className={feature.included ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}>
                       {feature.text}
                     </span>
                   </li>
@@ -138,9 +138,9 @@ const PricingTiers = () => {
           ))}
         </motion.div>
         
-        <div className="max-w-xl mx-auto text-center mt-12 text-gray-600">
+        <div className="max-w-xl mx-auto text-center mt-12 text-gray-600 dark:text-gray-400">
           <p>All plans include a 14-day free trial. No credit card required. Cancel anytime.</p>
-          <p className="mt-2">Need a custom solution? <Link to="/contact" className="text-marketing-blue hover:underline">Contact us</Link> for a tailored quote.</p>
+          <p className="mt-2">Need a custom solution? <Link to="/contact" className="text-marketing-blue dark:text-blue-400 hover:underline">Contact us</Link> for a tailored quote.</p>
         </div>
       </div>
     </section>

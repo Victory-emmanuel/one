@@ -78,7 +78,7 @@ const item = {
 
 const ServicesGrid = () => {
   return (
-    <section className="py-20 bg-gray-50" id="services-grid">
+    <section className="py-20 bg-gray-50 dark:bg-gray-900" id="services-grid">
       <div className="container-custom">
         <motion.div 
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
@@ -89,18 +89,18 @@ const ServicesGrid = () => {
         >
           {services.map((service) => (
             <motion.div key={service.id} variants={item}>
-              <Card className="h-full card-hover bg-white border-none shadow-md">
+              <Card className="h-full card-hover bg-white dark:bg-gray-800 border-none shadow-md dark:shadow-gray-900/30">
                 <CardHeader>
                   <div className="mb-4">{service.icon}</div>
-                  <CardTitle className="text-xl">{service.title}</CardTitle>
+                  <CardTitle className="text-xl dark:text-white">{service.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-gray-600 text-base">
+                  <CardDescription className="text-gray-600 dark:text-gray-300 text-base">
                     {service.description}
                   </CardDescription>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="link" className="text-marketing-blue p-0 hover:text-blue-700">
+                  <Button variant="link" className="text-marketing-blue p-0 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
                     Learn More
                   </Button>
                 </CardFooter>

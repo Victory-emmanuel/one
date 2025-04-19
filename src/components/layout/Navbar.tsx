@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { ThemeToggleAdvanced } from '@/components/theme/ThemeToggleAdvanced';
 
 const Navbar = () => {
   const { user, profile, signOut, isAdmin } = useAuth();
@@ -48,45 +50,46 @@ const Navbar = () => {
   return (
     <header
       className={`fixed w-full z-50 transition-all duration-300 ${
-        scrolled ? 'bg-white shadow-md py-3' : 'bg-transparent py-5'
+        scrolled ? 'bg-white dark:bg-gray-900 shadow-md dark:shadow-gray-800 py-3' : 'bg-transparent py-5'
       }`}
     >
       <div className="container-custom flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center">
-          <span className="text-2xl font-bold text-marketing-dark">
+          <span className="text-2xl font-bold text-marketing-dark dark:text-white">
             Marketing<span className="text-marketing-orange">Lot</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-marketing-dark hover:text-marketing-blue transition-colors">
+          <Link to="/" className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors">
             Home
           </Link>
-          <Link to="/services" className="text-marketing-dark hover:text-marketing-blue transition-colors">
+          <Link to="/services" className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors">
             Services
           </Link>
-          <Link to="/about" className="text-marketing-dark hover:text-marketing-blue transition-colors">
+          <Link to="/about" className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors">
             About
           </Link>
-          <Link to="/pricing" className="text-marketing-dark hover:text-marketing-blue transition-colors">
+          <Link to="/pricing" className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors">
             Pricing
           </Link>
-          <Link to="/blog" className="text-marketing-dark hover:text-marketing-blue transition-colors">
+          <Link to="/blog" className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors">
             Blog
           </Link>
           <div className="flex items-center space-x-3">
+            <ThemeToggle variant="ghost" />
             {user ? (
               <>
                 <Link to="/dashboard">
-                  <Button variant="outline" className="border-marketing-blue text-marketing-blue hover:bg-marketing-blue hover:text-white">
+                  <Button variant="outline" className="border-marketing-blue text-marketing-blue dark:text-blue-400 hover:bg-marketing-blue hover:text-white dark:border-blue-600 dark:hover:bg-blue-600">
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
                 {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="outline" className="border-marketing-dark text-marketing-dark hover:bg-marketing-dark hover:text-white">
+                    <Button variant="outline" className="border-marketing-dark text-marketing-dark dark:border-gray-400 dark:text-gray-300 hover:bg-marketing-dark hover:text-white dark:hover:bg-gray-700">
                       <Shield className="mr-2 h-4 w-4" /> Admin
                     </Button>
                   </Link>
@@ -128,24 +131,24 @@ const Navbar = () => {
             ) : (
               <>
                 <Link to="/auth">
-                  <Button variant="outline" className="border-marketing-dark text-marketing-dark hover:bg-marketing-blue hover:text-white hover:border-marketing-blue">
+                  <Button variant="outline" className="border-marketing-dark text-marketing-dark dark:border-gray-400 dark:text-gray-300 hover:bg-marketing-blue hover:text-white hover:border-marketing-blue dark:hover:bg-blue-600 dark:hover:border-blue-600">
                     <LogIn className="mr-2 h-4 w-4" /> Sign In
                   </Button>
                 </Link>
                 <Link to="/auth?tab=register">
-                  <Button variant="outline" className="border-marketing-blue text-marketing-blue hover:bg-marketing-blue hover:text-white">
+                  <Button variant="outline" className="border-marketing-blue text-marketing-blue dark:border-blue-600 dark:text-blue-400 hover:bg-marketing-blue hover:text-white dark:hover:bg-blue-600">
                     <UserPlus className="mr-2 h-4 w-4" /> Sign Up
                   </Button>
                 </Link>
                 {/* Special admin login link */}
-                <Link to="/admin-login" className="text-xs text-gray-400 hover:text-marketing-blue absolute -bottom-5 left-1/2 transform -translate-x-1/2">
+                <Link to="/admin-login" className="text-xs text-gray-400 dark:text-gray-500 hover:text-marketing-blue dark:hover:text-blue-400 absolute -bottom-5 left-1/2 transform -translate-x-1/2">
                   <Shield className="h-3 w-3 inline mr-1" />
                   <span>Admin</span>
                 </Link>
               </>
             )}
             <Link to="/contact">
-              <Button className="bg-marketing-blue hover:bg-blue-700 text-white">
+              <Button className="bg-marketing-blue hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700">
                 Get in Touch
               </Button>
             </Link>
@@ -165,39 +168,39 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-md animate-fade-in">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-900 shadow-md dark:shadow-gray-800 animate-fade-in">
           <div className="container-custom py-5 flex flex-col space-y-4">
             <Link
               to="/"
-              className="text-marketing-dark hover:text-marketing-blue transition-colors py-2"
+              className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors py-2"
               onClick={() => setIsOpen(false)}
             >
               Home
             </Link>
             <Link
               to="/services"
-              className="text-marketing-dark hover:text-marketing-blue transition-colors py-2"
+              className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors py-2"
               onClick={() => setIsOpen(false)}
             >
               Services
             </Link>
             <Link
               to="/about"
-              className="text-marketing-dark hover:text-marketing-blue transition-colors py-2"
+              className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors py-2"
               onClick={() => setIsOpen(false)}
             >
               About
             </Link>
             <Link
               to="/pricing"
-              className="text-marketing-dark hover:text-marketing-blue transition-colors py-2"
+              className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors py-2"
               onClick={() => setIsOpen(false)}
             >
               Pricing
             </Link>
             <Link
               to="/blog"
-              className="text-marketing-dark hover:text-marketing-blue transition-colors py-2"
+              className="text-marketing-dark dark:text-gray-200 hover:text-marketing-blue dark:hover:text-blue-400 transition-colors py-2"
               onClick={() => setIsOpen(false)}
             >
               Blog
@@ -208,7 +211,7 @@ const Navbar = () => {
                   to="/dashboard"
                   onClick={() => setIsOpen(false)}
                 >
-                  <Button variant="outline" className="w-full border-marketing-blue text-marketing-blue hover:bg-marketing-blue hover:text-white mb-2">
+                  <Button variant="outline" className="w-full border-marketing-blue text-marketing-blue dark:border-blue-600 dark:text-blue-400 hover:bg-marketing-blue hover:text-white dark:hover:bg-blue-600 mb-2">
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
@@ -217,7 +220,7 @@ const Navbar = () => {
                     to="/admin"
                     onClick={() => setIsOpen(false)}
                   >
-                    <Button variant="outline" className="w-full border-marketing-dark text-marketing-dark hover:bg-marketing-dark hover:text-white mb-2">
+                    <Button variant="outline" className="w-full border-marketing-dark text-marketing-dark dark:border-gray-400 dark:text-gray-300 hover:bg-marketing-dark hover:text-white dark:hover:bg-gray-700 mb-2">
                       <Shield className="mr-2 h-4 w-4" /> Admin
                     </Button>
                   </Link>
@@ -229,7 +232,7 @@ const Navbar = () => {
                   to="/auth"
                   onClick={() => setIsOpen(false)}
                 >
-                  <Button variant="outline" className="w-full border-marketing-dark text-marketing-dark hover:bg-marketing-blue hover:text-white hover:border-marketing-blue mb-2">
+                  <Button variant="outline" className="w-full border-marketing-dark text-marketing-dark dark:border-gray-400 dark:text-gray-300 hover:bg-marketing-blue hover:text-white hover:border-marketing-blue dark:hover:bg-blue-600 dark:hover:border-blue-600 mb-2">
                     <LogIn className="mr-2 h-4 w-4" /> Sign In
                   </Button>
                 </Link>
@@ -237,7 +240,7 @@ const Navbar = () => {
                   to="/auth?tab=register"
                   onClick={() => setIsOpen(false)}
                 >
-                  <Button variant="outline" className="w-full border-marketing-blue text-marketing-blue hover:bg-marketing-blue hover:text-white mb-2">
+                  <Button variant="outline" className="w-full border-marketing-blue text-marketing-blue dark:border-blue-600 dark:text-blue-400 hover:bg-marketing-blue hover:text-white dark:hover:bg-blue-600 mb-2">
                     <UserPlus className="mr-2 h-4 w-4" /> Sign Up
                   </Button>
                 </Link>
@@ -247,10 +250,14 @@ const Navbar = () => {
               to="/contact"
               onClick={() => setIsOpen(false)}
             >
-              <Button className="w-full bg-marketing-blue hover:bg-blue-700 text-white">
+              <Button className="w-full bg-marketing-blue hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700">
                 Get in Touch
               </Button>
             </Link>
+
+            <div className="flex justify-center mt-4">
+              <ThemeToggleAdvanced className="mx-auto" />
+            </div>
           </div>
         </div>
       )}

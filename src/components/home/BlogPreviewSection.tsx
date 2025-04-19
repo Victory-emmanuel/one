@@ -39,11 +39,11 @@ const BlogPreviewSection = () => {
   }, []);
 
   return (
-    <section className="section-padding bg-white" id="blog-preview">
+    <section className="section-padding bg-white dark:bg-marketing-dark" id="blog-preview">
       <div className="container-custom">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Latest Insights</h2>
-          <p className="text-lg text-gray-700">
+          <p className="text-lg text-gray-700 dark:text-white">
             Stay up-to-date with the latest marketing trends, tips, and strategies.
           </p>
         </div>
@@ -64,7 +64,7 @@ const BlogPreviewSection = () => {
                   />
                 </div>
                 <CardHeader>
-                  <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
+                  <div className="flex justify-between items-center text-sm text-gray-500 mb-2 dark:text-white">
                     <span>{new Date(post.created_at).toLocaleDateString()}</span>
                     <Badge variant="outline">{post.tag}</Badge>
                   </div>
@@ -87,7 +87,7 @@ const BlogPreviewSection = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-600">No blog posts available. Check back soon!</p>
+            <p className="text-gray-600 dark:text-white">No blog posts available. Check back soon!</p>
           </div>
         )}
 

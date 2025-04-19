@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 const ServicesBanner = () => {
   return (
-    <section className="py-24 bg-marketing-dark text-white">
+    <section className="py-24 bg-marketing-dark text-white dark:bg-gray-900">
       <div className="container-custom">
         <div className="max-w-3xl mx-auto text-center">
           <motion.h1 

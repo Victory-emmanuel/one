@@ -107,7 +107,7 @@ const BlogGrid = () => {
                   }
                 }}
                 onKeyDown={(e) => e.key === 'Escape' && clearSearch()}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-marketing-blue"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-marketing-blue"
                 aria-label="Search articles by title"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -132,8 +132,8 @@ const BlogGrid = () => {
                 variant={selectedTag === tag ? "default" : "outline"}
                 className={`cursor-pointer ${
                   selectedTag === tag
-                    ? "bg-marketing-blue hover:bg-marketing-blue/90"
-                    : "hover:bg-gray-100"
+                    ? "bg-marketing-blue hover:bg-marketing-blue/90 dark:bg-blue-600"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
                 onClick={() => handleTagClick(tag)}
               >
@@ -155,7 +155,7 @@ const BlogGrid = () => {
 
         {loading ? (
           <div className="flex justify-center items-center py-20">
-            <Loader2 className="h-10 w-10 animate-spin text-marketing-blue" />
+            <Loader2 className="h-10 w-10 animate-spin text-marketing-blue dark:text-blue-400" />
           </div>
         ) : filteredPosts.length > 0 ? (
           <motion.div
@@ -168,7 +168,7 @@ const BlogGrid = () => {
           >
             {filteredPosts.map((post) => (
               <motion.div key={post.id} variants={item}>
-                <Card className="card-hover overflow-hidden border-none shadow-md h-full flex flex-col">
+                <Card className="card-hover overflow-hidden border-none shadow-md h-full flex flex-col dark:bg-gray-800">
                   <div className="h-48 overflow-hidden">
                     <img
                       src={post.image_url}
@@ -177,20 +177,20 @@ const BlogGrid = () => {
                     />
                   </div>
                   <CardHeader>
-                    <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
+                    <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400 mb-2">
                       <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                      <Badge variant="outline">{post.tag}</Badge>
+                      <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{post.tag}</Badge>
                     </div>
-                    <CardTitle className="line-clamp-2">{post.title}</CardTitle>
+                    <CardTitle className="line-clamp-2 dark:text-white">{post.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="flex-grow">
-                    <CardDescription className="text-gray-600 line-clamp-3 mb-4">
+                    <CardDescription className="text-gray-600 dark:text-gray-300 line-clamp-3 mb-4">
                       {post.excerpt}
                     </CardDescription>
                   </CardContent>
                   <CardFooter>
                     <a href={post.medium_link} target="_blank" rel="noopener noreferrer">
-                      <Button variant="link" className="text-marketing-blue p-0 hover:text-blue-700">
+                      <Button variant="link" className="text-marketing-blue dark:text-blue-400 p-0 hover:text-blue-700 dark:hover:text-blue-300">
                         Read More
                       </Button>
                     </a>
@@ -201,8 +201,8 @@ const BlogGrid = () => {
           </motion.div>
         ) : (
           <div className="text-center py-12">
-            <h3 className="text-xl font-semibold mb-2">No articles found</h3>
-            <p className="text-gray-600">Try adjusting your search or filter criteria</p>
+            <h3 className="text-xl font-semibold mb-2 dark:text-white">No articles found</h3>
+            <p className="text-gray-600 dark:text-gray-400">Try adjusting your search or filter criteria</p>
           </div>
         )}
       </div>

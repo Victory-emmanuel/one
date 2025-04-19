@@ -57,14 +57,14 @@ const ContactForm = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white p-8 rounded-lg shadow-md"
+      className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-lg shadow-md"
     >
-      <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white">Send Us a Message</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Your Name *
             </label>
             <input
@@ -73,13 +73,13 @@ const ContactForm = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="John Doe"
             />
           </div>
           
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email Address *
             </label>
             <input
@@ -88,13 +88,13 @@ const ContactForm = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="john@example.com"
             />
           </div>
           
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Phone Number
             </label>
             <input
@@ -102,13 +102,13 @@ const ContactForm = () => {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="+1 (123) 456-7890"
             />
           </div>
           
           <div>
-            <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Company Name
             </label>
             <input
@@ -116,14 +116,14 @@ const ContactForm = () => {
               type="text"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="Your Company Ltd."
             />
           </div>
         </div>
         
         <div>
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Your Message *
           </label>
           <textarea
@@ -132,7 +132,7 @@ const ContactForm = () => {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-marketing-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             placeholder="Please describe your project or inquiry..."
           />
         </div>
@@ -142,9 +142,9 @@ const ContactForm = () => {
             id="privacy"
             type="checkbox"
             required
-            className="h-4 w-4 text-marketing-blue border-gray-300 rounded focus:ring-marketing-blue"
+            className="h-4 w-4 text-marketing-blue border-gray-300 dark:border-gray-600 rounded focus:ring-marketing-blue"
           />
-          <label htmlFor="privacy" className="ml-2 block text-sm text-gray-700">
+          <label htmlFor="privacy" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
             I agree to the <a href="#" className="text-marketing-blue hover:underline">Privacy Policy</a> and consent to being contacted regarding my inquiry.
           </label>
         </div>

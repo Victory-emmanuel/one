@@ -36,7 +36,7 @@ const faqs = [
 
 const PricingFaq = () => {
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-gray-50 dark:bg-gray-900">
       <div className="container-custom">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -45,8 +45,8 @@ const PricingFaq = () => {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
-          <p className="text-lg text-gray-700">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Frequently Asked Questions</h2>
+          <p className="text-lg text-gray-700 dark:text-gray-300">
             Find answers to common questions about our pricing and plans.
           </p>
         </motion.div>
@@ -56,15 +56,15 @@ const PricingFaq = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           viewport={{ once: true }}
-          className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-md"
+          className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md"
         >
           <Accordion type="single" collapsible className="w-full">
             {faqs.map((faq, index) => (
               <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left text-lg font-semibold">
+                <AccordionTrigger className="text-left text-lg font-semibold dark:text-white">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-gray-700">
+                <AccordionContent className="text-gray-700 dark:text-gray-300">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -79,9 +79,9 @@ const PricingFaq = () => {
           viewport={{ once: true }}
           className="max-w-xl mx-auto text-center mt-12"
         >
-          <p className="text-lg">
+          <p className="text-lg dark:text-white">
             Still have questions? Contact our team at{" "}
-            <a href="mailto:info@marketinglot.com" className="text-marketing-blue hover:underline">
+            <a href="mailto:info@marketinglot.com" className="text-marketing-blue dark:text-blue-400 hover:underline">
               info@marketinglot.com
             </a>
           </p>

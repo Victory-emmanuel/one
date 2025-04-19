@@ -47,7 +47,7 @@ const ServicesFaq = () => {
   };
 
   return (
-    <section className="py-20 bg-gray-50" id="services-faq">
+    <section className="py-20 bg-gray-50 dark:bg-gray-900" id="services-faq">
       <div className="container-custom">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -56,8 +56,8 @@ const ServicesFaq = () => {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
-          <p className="text-lg text-gray-700">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Frequently Asked Questions</h2>
+          <p className="text-lg text-gray-700 dark:text-gray-300">
             Find answers to common questions about our digital marketing services.
           </p>
         </motion.div>
@@ -72,10 +72,10 @@ const ServicesFaq = () => {
           <Accordion type="single" collapsible className="w-full">
             {faqs.map((faq, index) => (
               <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left text-lg font-semibold">
+                <AccordionTrigger className="text-left text-lg font-semibold dark:text-white">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-gray-700">
+                <AccordionContent className="text-gray-700 dark:text-gray-300">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

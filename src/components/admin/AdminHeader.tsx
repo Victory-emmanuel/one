@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Menu, User, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +56,7 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }: AdminHeaderProps) => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left side - Mobile menu button and title */}
@@ -71,8 +72,8 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }: AdminHeaderProps) => {
             </button>
             <div className="ml-4 flex items-center">
               <Shield className="h-5 w-5 text-marketing-blue mr-2" />
-              <h1 className="text-xl font-semibold text-gray-800">Admin Dashboard</h1>
-              <Badge variant="outline" className="ml-2 bg-marketing-blue text-white">
+              <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Admin Dashboard</h1>
+              <Badge variant="outline" className="ml-2 bg-marketing-blue dark:bg-blue-700 text-white">
                 Admin
               </Badge>
 
@@ -83,8 +84,10 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }: AdminHeaderProps) => {
             </div>
           </div>
 
-          {/* Right side - User menu */}
+          {/* Right side - Theme toggle and user menu */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <ThemeToggle variant="ghost" />
             {/* Notifications */}
             <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
               <DropdownMenuTrigger asChild>

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Bell, Menu, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,7 +36,7 @@ const DashboardHeader = ({ sidebarOpen, setSidebarOpen }: DashboardHeaderProps) 
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left side - Mobile menu button */}
@@ -44,14 +45,18 @@ const DashboardHeader = ({ sidebarOpen, setSidebarOpen }: DashboardHeaderProps) 
               type="button"
               className="md:hidden text-gray-500 hover:text-gray-700 focus:outline-none"
               onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle sidebar"
+              title="Toggle sidebar"
             >
               <Menu className="h-6 w-6" />
             </button>
-            <h1 className="ml-4 text-xl font-semibold text-gray-800">Dashboard</h1>
+            <h1 className="ml-4 text-xl font-semibold text-gray-800 dark:text-gray-100">Dashboard</h1>
           </div>
 
-          {/* Right side - User menu */}
+          {/* Right side - Theme toggle and user menu */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <ThemeToggle variant="ghost" />
             {/* Notifications */}
             <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
               <DropdownMenuTrigger asChild>
