@@ -80,12 +80,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <main className="flex-1 overflow-y-auto p-2 xs:p-4 md:p-6 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="container mx-auto"
+            className="w-full max-w-[1200px] mx-auto px-2 xs:px-4"
           >
             {children}
           </motion.div>

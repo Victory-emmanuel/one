@@ -163,7 +163,7 @@ const AdminDashboardPage = () => {
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Welcome, {profile?.full_name || 'Admin'}!</h2>
+            <h2 className="text-xl xs:text-2xl font-bold tracking-tight">Welcome, {profile?.full_name || 'Admin'}!</h2>
             <p className="text-muted-foreground">
               Here's an overview of your business performance.
             </p>
@@ -172,7 +172,7 @@ const AdminDashboardPage = () => {
 
         {/* Stats Cards */}
         <motion.div
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+          className="grid gap-3 xs:gap-4 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4"
           variants={{
             hidden: { opacity: 0 },
             show: {
@@ -200,7 +200,7 @@ const AdminDashboardPage = () => {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl xs:text-2xl font-bold">
                   {loading ? 'Loading...' : clientStats.totalClients}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -225,7 +225,7 @@ const AdminDashboardPage = () => {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl xs:text-2xl font-bold">
                   {loading ? 'Loading...' : clientStats.activeSubscriptions}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -250,7 +250,7 @@ const AdminDashboardPage = () => {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl xs:text-2xl font-bold">
                   {loading ? 'Loading...' : `$${revenueStats.monthlyRevenue.toLocaleString()}`}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -275,7 +275,7 @@ const AdminDashboardPage = () => {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl xs:text-2xl font-bold">
                   {loading ? 'Loading...' : `${revenueStats.growthRate}%`}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -287,8 +287,8 @@ const AdminDashboardPage = () => {
         </motion.div>
 
         {/* Main Content */}
-        <Tabs defaultValue="reports" className="space-y-4">
-          <TabsList>
+        <Tabs defaultValue="reports" className="space-y-4 overflow-x-auto">
+          <TabsList className="w-full flex justify-start overflow-x-auto">
             <TabsTrigger value="reports">Reports & Analytics</TabsTrigger>
             <TabsTrigger value="clients">Client Growth</TabsTrigger>
             <TabsTrigger value="revenue">Revenue</TabsTrigger>

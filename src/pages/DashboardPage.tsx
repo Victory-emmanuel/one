@@ -57,7 +57,7 @@ const DashboardPage = () => {
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Welcome back, {profile?.full_name || 'there'}!</h2>
+            <h2 className="text-xl xs:text-2xl font-bold tracking-tight">Welcome back, {profile?.full_name || 'there'}!</h2>
             <p className="text-muted-foreground">
               Here's what's happening with your account today.
             </p>
@@ -66,7 +66,7 @@ const DashboardPage = () => {
 
         {/* Stats Cards */}
         <motion.div
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+          className="grid gap-3 xs:gap-4 grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4"
           variants={{
             hidden: { opacity: 0 },
             show: {
@@ -94,7 +94,7 @@ const DashboardPage = () => {
                 <CalendarDays className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl xs:text-2xl font-bold">
                   {trialDaysLeft !== null ? `${trialDaysLeft} days left` : 'Loading...'}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -126,7 +126,7 @@ const DashboardPage = () => {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl xs:text-2xl font-bold">
                   {subscription?.plan || 'Loading...'}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -151,7 +151,7 @@ const DashboardPage = () => {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0</div>
+                <div className="text-xl xs:text-2xl font-bold">0</div>
                 <p className="text-xs text-muted-foreground">
                   No active support tickets
                 </p>
@@ -174,7 +174,7 @@ const DashboardPage = () => {
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">--</div>
+                <div className="text-xl xs:text-2xl font-bold">--</div>
                 <p className="text-xs text-muted-foreground">
                   Analytics available in paid plans
                 </p>
@@ -198,7 +198,7 @@ const DashboardPage = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 gap-3 xs:gap-4">
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Plan</h3>
                     <p className="text-lg font-semibold">{subscription?.plan}</p>
