@@ -56,24 +56,16 @@ const AdminHeader = ({ sidebarOpen, setSidebarOpen }: AdminHeaderProps) => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 md:block hidden">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left side - Mobile menu button and title */}
           <div className="flex items-center">
-            <button
-              type="button"
-              className="md:hidden text-gray-500 hover:text-gray-700 focus:outline-none"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label="Toggle sidebar"
-              title="Toggle sidebar"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
+            {/* Mobile menu button removed as per requirement */}
             <div className="ml-4 flex items-center">
-              <Shield className="h-5 w-5 text-marketing-blue mr-2" />
-              <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Admin Dashboard</h1>
-              <Badge variant="outline" className="ml-2 bg-marketing-blue dark:bg-blue-700 text-white">
+              <Shield className="h-5 w-5 text-marketing-blue mr-2 md:block hidden" />
+              <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 md:block hidden">Admin Dashboard</h1>
+              <Badge variant="outline" className="ml-2 bg-marketing-blue dark:bg-blue-700 text-white md:block hidden">
                 Admin
               </Badge>
 

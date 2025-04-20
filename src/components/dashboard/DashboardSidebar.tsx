@@ -1,6 +1,4 @@
-import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import {
   User,
   Settings,
@@ -9,10 +7,14 @@ import {
   MessageSquare,
   LogOut,
   ChevronLeft,
-  Home
+  Home,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
+
 
 interface DashboardSidebarProps {
   open: boolean;
@@ -20,7 +22,19 @@ interface DashboardSidebarProps {
 }
 
 const DashboardSidebar = ({ open, setOpen }: DashboardSidebarProps) => {
-  const { signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
+
+  // Get user initials for avatar fallback
+  const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase();
+    }
+    return user?.email?.substring(0, 2).toUpperCase() || 'U';
+  };
   const location = useLocation();
 
   const navItems = [
@@ -56,27 +70,26 @@ const DashboardSidebar = ({ open, setOpen }: DashboardSidebarProps) => {
     },
   ];
 
-  const sidebarVariants = {
-    open: { width: '240px', transition: { duration: 0.3 } },
-    closed: { width: '80px', transition: { duration: 0.3 } }
-  };
-
   return (
-    <motion.div
-      className="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-30 h-screen flex-shrink-0 overflow-hidden"
-      initial={open ? 'open' : 'closed'}
-      animate={open ? 'open' : 'closed'}
-      variants={sidebarVariants}
+    <div
+      className={`bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-30 h-screen flex-shrink-0 overflow-hidden ${open ? 'w-60' : 'w-20'} ${open ? 'md:relative fixed' : 'md:relative fixed'} ${open ? 'md:translate-x-0 translate-x-0' : 'md:translate-x-0 -translate-x-full'} transition-transform duration-300 shadow-xl`}
     >
       <div className="flex flex-col h-full">
         {/* Logo and collapse button */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           {open && (
-            <Link to="/" className="flex items-center">
+            <Link to="/" className="items-center md:flex hidden">
               <span className="text-xl font-bold text-marketing-dark dark:text-white">
                 Marketing<span className="text-marketing-orange">Lot</span>
               </span>
             </Link>
+          )}
+
+          {/* Add mobile header elements when sidebar is open */}
+          {open && (
+            <div className="md:hidden flex items-center">
+              <span className="text-sm font-medium text-gray-800 dark:text-white">Client Dashboard</span>
+            </div>
           )}
           <button
             type="button"
@@ -111,6 +124,38 @@ const DashboardSidebar = ({ open, setOpen }: DashboardSidebarProps) => {
           </ul>
         </nav>
 
+        {/* Mobile Profile Section */}
+        {open && (
+          <div className="md:hidden p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-3 mb-3">
+              <Avatar>
+                <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || user?.email} />
+                <AvatarFallback>{getInitials()}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-800 dark:text-white">{profile?.full_name || user?.email}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between mt-4 mb-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Theme</span>
+              <ThemeToggle variant="outline" size="sm" />
+            </div>
+            <div className="flex items-center justify-between mt-4 mb-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Notifications</span>
+              <button
+                type="button"
+                className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+                aria-label="Notifications"
+                title="Notifications"
+              >
+                <Bell className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-marketing-orange"></span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Logout button */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <button
@@ -124,7 +169,7 @@ const DashboardSidebar = ({ open, setOpen }: DashboardSidebarProps) => {
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

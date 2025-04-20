@@ -11,10 +11,14 @@ import {
   ChevronLeft,
   Mail,
   UserCog,
-  FileText
+  FileText,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import AdminAccessButton from './AdminAccessButton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 interface AdminSidebarProps {
   open: boolean;
@@ -22,9 +26,21 @@ interface AdminSidebarProps {
 }
 
 const AdminSidebar = ({ open, setOpen }: AdminSidebarProps) => {
-  const { signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Get user initials for avatar fallback
+  const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase();
+    }
+    return user?.email?.substring(0, 2).toUpperCase() || 'A';
+  };
 
   // Manual logout function as a fallback
   const handleManualLogout = () => {
@@ -96,16 +112,31 @@ const AdminSidebar = ({ open, setOpen }: AdminSidebarProps) => {
   // };
 
   return (
-    <div className={`bg-marketing-dark text-white border-r border-gray-800 z-30 h-screen flex-shrink-0 overflow-hidden ${open ? 'w-60' : 'w-20'}`}>
+    <div className={`bg-marketing-dark text-white border-r border-gray-800 z-30 h-screen flex-shrink-0 overflow-hidden ${open ? 'w-60' : 'w-20'} ${open ? 'md:relative fixed' : 'md:relative fixed'} ${open ? 'md:translate-x-0 translate-x-0' : 'md:translate-x-0 -translate-x-full'} transition-transform duration-300 shadow-xl`}>
       <div className="flex flex-col h-full">
         {/* Logo and collapse button */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           {open && (
-            <Link to="/admin" className="flex items-center">
+            <Link to="/admin" className="items-center md:flex hidden">
               <span className="text-xl font-bold text-white">
                 Admin<span className="text-marketing-orange">Panel</span>
               </span>
             </Link>
+          )}
+
+          {/* Add mobile header elements */}
+          {!open && (
+            <div className="md:hidden flex items-center">
+              <Shield className="h-5 w-5 text-marketing-blue" />
+            </div>
+          )}
+
+          {/* Add mobile header elements when sidebar is open */}
+          {open && (
+            <div className="md:hidden flex items-center">
+              <Shield className="h-5 w-5 text-marketing-blue mr-2" />
+              <span className="text-sm font-medium">Admin Dashboard</span>
+            </div>
           )}
           <button
             type="button"
@@ -139,6 +170,29 @@ const AdminSidebar = ({ open, setOpen }: AdminSidebarProps) => {
             ))}
           </ul>
         </nav>
+
+        {/* Mobile Profile Section */}
+        {open && (
+          <div className="md:hidden p-4 border-t border-gray-700">
+            <div className="flex items-center space-x-3 mb-3">
+              <Avatar>
+                <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || user?.email} />
+                <AvatarFallback>{getInitials()}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-white">{profile?.full_name || user?.email}</span>
+                <span className="text-xs text-gray-400">{user?.email}</span>
+              </div>
+            </div>
+            <div className="mb-3">
+              <AdminAccessButton />
+            </div>
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-sm text-gray-400">Theme</span>
+              <ThemeToggle variant="outline" size="sm" />
+            </div>
+          </div>
+        )}
 
         {/* Logout buttons */}
         <div className="p-4 border-t border-gray-700 space-y-2">

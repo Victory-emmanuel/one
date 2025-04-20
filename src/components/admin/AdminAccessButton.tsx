@@ -35,7 +35,7 @@ const AdminAccessButton = () => {
       <Button
         variant="outline"
         size="sm"
-        className="ml-auto bg-green-50 text-green-600 border-green-200"
+        className="ml-auto bg-green-50 text-green-600 border-green-200 w-full md:w-auto"
         disabled
       >
         <Check className="mr-2 h-4 w-4" />
@@ -109,7 +109,7 @@ const AdminAccessButton = () => {
       size="sm"
       onClick={handleGrantAdminAccess}
       disabled={isLoading}
-      className="ml-auto"
+      className="ml-auto w-full md:w-auto"
     >
       {isLoading ? (
         <>

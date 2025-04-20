@@ -36,21 +36,13 @@ const DashboardHeader = ({ sidebarOpen, setSidebarOpen }: DashboardHeaderProps) 
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 md:block hidden">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left side - Mobile menu button */}
           <div className="flex items-center">
-            <button
-              type="button"
-              className="md:hidden text-gray-500 hover:text-gray-700 focus:outline-none"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label="Toggle sidebar"
-              title="Toggle sidebar"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-            <h1 className="ml-4 text-xl font-semibold text-gray-800 dark:text-gray-100">Dashboard</h1>
+            {/* Mobile menu button removed as per requirement */}
+            <h1 className="ml-4 text-xl font-semibold text-gray-800 dark:text-gray-100 md:block hidden">Dashboard</h1>
           </div>
 
           {/* Right side - Theme toggle and user menu */}
