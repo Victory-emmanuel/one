@@ -87,11 +87,11 @@ const Navbar = () => {
 
   return (
     <header
-      className={`fixed w-full z-50 transition-all duration-300 overflow-x-hidden ${
+      className={`fixed w-full z-50 transition-all duration-300 ${
         scrolled ? 'bg-white dark:bg-gray-900 shadow-md dark:shadow-gray-800 py-3' : 'bg-transparent py-5'
       }`}
     >
-      <div className="container-custom flex items-center justify-between overflow-x-hidden">
+      <div className="container-custom flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center">
           <span className="text-2xl font-bold text-marketing-dark dark:text-white">

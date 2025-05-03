@@ -46,9 +46,9 @@ const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
+    <div className="flex flex-col min-h-screen w-full">
       <Navbar />
-      <main className="flex-grow pt-24 w-full overflow-x-hidden">{children}</main>
+      <main className="flex-grow pt-24 w-full">{children}</main>
       <Footer />
       <Toaster />
       <DirectJotFormChat debug={false} />

@@ -1,8 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Linkedin, Mail } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import NewsletterForm from '@/components/newsletter/NewsletterForm';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -14,21 +13,10 @@ const Footer = () => {
         <div className="mb-12 lg:mb-16 text-center">
           <h2 className="text-3xl mb-6">Join Our Newsletter</h2>
           <p className="max-w-2xl mx-auto mb-8">Stay updated with the latest marketing trends, tips, and insights delivered straight to your inbox.</p>
-          
-          {/* ConvertKit Embedded Form */}
-          <div id="convertkit-newsletter-form" className="max-w-md mx-auto">
-            {/* This div will be replaced by the ConvertKit form script */}
-            <div className="flex gap-2">
-              <Input 
-                type="email" 
-                placeholder="Your email address" 
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
-              />
-              <Button className="bg-marketing-orange hover:bg-orange-600 text-white whitespace-nowrap">
-                Subscribe
-              </Button>
-            </div>
-            <p className="text-xs mt-2 text-white/60">By subscribing, you agree to our Privacy Policy.</p>
+
+          {/* Newsletter Form */}
+          <div className="max-w-md mx-auto">
+            <NewsletterForm darkMode={true} className="w-full" />
           </div>
         </div>
 
@@ -40,16 +28,16 @@ const Footer = () => {
               A leading automation solutions provider helping businesses transform through AI-powered technologies.
             </p>
             <div className="flex space-x-4">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-marketing-blue transition-colors">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-marketing-blue transition-colors" aria-label="Facebook" title="Facebook">
                 <Facebook size={20} />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-marketing-blue transition-colors">
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-marketing-blue transition-colors" aria-label="Twitter" title="Twitter">
                 <Twitter size={20} />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-marketing-blue transition-colors">
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-marketing-blue transition-colors" aria-label="Instagram" title="Instagram">
                 <Instagram size={20} />
               </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-marketing-blue transition-colors">
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-marketing-blue transition-colors" aria-label="LinkedIn" title="LinkedIn">
                 <Linkedin size={20} />
               </a>
             </div>
@@ -89,7 +77,7 @@ const Footer = () => {
               <p className="mb-2">San Francisco, CA 94105</p>
               <p className="mb-2">United States</p>
               <p className="mb-2 flex items-center">
-                <Mail size={16} className="mr-2" /> 
+                <Mail size={16} className="mr-2" />
                 <a href="mailto:info@nextgendigi.com" className="hover:text-marketing-blue transition-colors">
                   info@nextgendigi.com
                 </a>
